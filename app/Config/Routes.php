@@ -18,4 +18,7 @@ $routes->group('api', function($routes) {
     // login
     $routes->post('login', 'SuperAdminController::login');
 
+    // add-worker
+    $routes->post('add-worker', 'WorkerController::create');
+
 });
