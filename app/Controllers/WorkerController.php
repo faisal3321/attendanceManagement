@@ -10,7 +10,6 @@ class WorkerController extends ResourceController
 {
     protected $format = 'json';
 
-    // POST: api/add-worker (BY admin or super-admin)
     public function create()  
     {
         // Auth check
@@ -30,7 +29,12 @@ class WorkerController extends ResourceController
         // Get request data
         $data = $this->request->getJSON(true) ?? [];
 
-        $requiredField = ['name', 'age', 'gender', 'phone'];
+        $requiredField = [
+            'name', 
+            'age', 
+            'gender', 
+            'phone'
+        ];
 
         foreach ($requiredField as $field) {
             if (empty($data[$field])) {
@@ -38,9 +42,10 @@ class WorkerController extends ResourceController
             }
         }
 
-        // generate unique worker_id
         $workerModel = new WorkerModel;
-        $workerId = $this->generateWorkerId($workerModel);
+
+        // Logic to generate worker ID
+        $workerId = 'WRK' . date('His');
 
         // prepare insert data
         $insertData = [
@@ -56,26 +61,17 @@ class WorkerController extends ResourceController
 
         // insert data
         if (! $workerModel->insert($insertData)) {
-            return $this->failServerError('failed to create worker');
+            // If it fails, it's likely because the ID already exists (same second)
+            return $this->failServerError('Failed to create worker. Please try again in a second.');
         }
 
         // respond
         return $this->respondCreated([
-            'status'        => 201,
-            'message'       => 'Worker created successfully!',
-            'data'          => [
-                'worker_id'          => $workerId
+            'status'  => 201,
+            'message' => 'Worker created successfully!',
+            'data'    => [
+                'worker_id' => $workerId
             ]
         ]);
     }
-
-    // function for generate unique worker ID
-        private function generateWorkerId(WorkerModel $workerModel) {
-            do {
-                $workerId = 'WRK' . str_pad(random_int(1, 999999), 6, '0', STR_PAD_LEFT);
-            }
-            while ($workerModel->where('worker_id', $workerId)->first());
-
-            return $workerId;
-        }
 }
