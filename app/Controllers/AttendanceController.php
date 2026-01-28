@@ -119,4 +119,48 @@ class AttendanceController extends ResourceController
             'data'    => $attendanceModel->getFullAttendance()
         ]);
     }
+
+
+    /**
+     * ADMIN OVERRIDE:
+     * Admin can manually fix worker_attendance, customer_side_attendance, and punch times.
+     * This resolves discrepancies manually.
+     */
+    public function adminOverride()
+    {
+        $attendanceModel = new AttendanceModel();
+        $data = $this->request->getJSON(true);
+
+        if (empty($data['id'])) {
+            return $this->failValidationError("Attendance ID is required for override.");
+        }
+
+        // 1. Fetch current record
+        $record = $attendanceModel->find($data['id']);
+        if (!$record) return $this->failNotFound("Attendance record not found.");
+
+        // 2. Prepare update data (uses existing values if fields are missing in JSON)
+        $w_att = isset($data['worker_attendance']) ? (int)$data['worker_attendance'] : (int)$record['worker_attendance'];
+        $c_att = isset($data['customer_side_attendance']) ? (int)$data['customer_side_attendance'] : (int)$record['customer_side_attendance'];
+        
+        // 3. Auto-resolve discrepancy if the admin makes them match
+        $discrepancy = ($w_att != $c_att) ? 1 : 0;
+
+        $updateData = [
+            'worker_attendance'        => $w_att,
+            'customer_side_attendance' => $c_att,
+            'discrepancy'              => $discrepancy
+        ];
+
+        if ($attendanceModel->update($data['id'], $updateData)) {
+            return $this->respond([
+                'status'  => 200,
+                'success' => true,
+                'message' => "Admin Override successful. Record updated.",
+                'data'    => $updateData
+            ]);
+        }
+
+        return $this->failServerError("Failed to perform override.");
+    }
 }

@@ -36,10 +36,15 @@ $routes->group('api', function($routes) {
 
     // Booking endpoints
     $routes->get('bookings', 'BookingController::index');
-
     $routes->post('book/worker', 'BookingController::create');
-
     // GET: /api/mybookings/CUST1234509823
     $routes->get('mybookings/(:any)', 'BookingController::show/$1');
+
+
+    // MAIN ATTENDANCE API
+    $routes->get('attendance', 'AttendanceController::index');
+    $routes->post('attendance/sync', 'AttendanceController::syncDailyAttendance');
+    $routes->post('attendance/customer/update', 'AttendanceController::updateCustomerStatus');
+    $routes->put('attendance/admin/override', 'AttendanceController::adminOverride');
 
 });
