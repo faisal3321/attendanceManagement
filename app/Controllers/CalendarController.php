@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\CalendarModel;
 use App\Controllers\BaseController;
+use App\Controllers\AttendanceController;
 
 class CalendarController extends BaseController
 {
@@ -35,6 +36,11 @@ class CalendarController extends BaseController
             ];
 
             $model->insert($newData);
+
+            // trigger attendance here
+            // This syncs all workers for the newly created date
+            $att = new AttendanceController();
+            $att->syncDailyAttendance();
 
         }
 
