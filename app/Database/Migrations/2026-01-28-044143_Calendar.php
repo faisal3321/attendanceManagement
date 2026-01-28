@@ -59,6 +59,6 @@ class Calendar extends Migration
 
     public function down()
     {
-        //
+        $this->forge->dropTable('calendar');
     }
 }

@@ -23,8 +23,6 @@ class WorkerModel extends Model
         'creator_role',
     ];
 
-   
-
     // Dates
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';

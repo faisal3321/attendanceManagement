@@ -9,7 +9,7 @@ class SuperAdminController extends ResourceController
 {
     protected $format = 'json';
 
-    // POST: /api/setup-super-admin (ONE TIME)
+    // POST: /api/setup-super-admin (only on time, for the first time)
     public function setupSuperAdmin()
     {
         $model = new SuperAdminModel();
@@ -32,11 +32,12 @@ class SuperAdminController extends ResourceController
 
         return $this->respondCreated([
             'status'  => 201,
+            'success' => true,
             'message' => 'Super admin created successfully',
         ]);
     }
 
-    // POST: /api/admin (SUPER ADMIN ONLY)
+    // POST: /api/admin (only super admin can make admin, then admin can use username and password to login into their account)
     public function createAdmin()
     {
         $model = new SuperAdminModel();
@@ -73,6 +74,7 @@ class SuperAdminController extends ResourceController
 
         return $this->respondCreated([
             'status'  => 201,
+            'success' => true,
             'message' => 'Admin created successfully',
         ]);
     }
@@ -96,6 +98,7 @@ class SuperAdminController extends ResourceController
 
         return $this->respond([
             'status'  => 200,
+            'success' => true,
             'message' => 'Login successful',
             'data'    => [
                 'admin_id' => $admin['id'],

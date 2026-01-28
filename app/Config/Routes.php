@@ -11,7 +11,7 @@ $routes->get('/', 'Home::index');
 $routes->group('api', function($routes) {
 
     // super admin
-    $routes->post('setup-super-admin', 'SuperAdminController::setupSuperAdmin');
+    $routes->post('super/admin', 'SuperAdminController::setupSuperAdmin');
 
     // admin
     $routes->post('admin', 'SuperAdminController::createAdmin');
@@ -20,7 +20,7 @@ $routes->group('api', function($routes) {
 
     
     // add-worker
-    $routes->post('add-worker', 'WorkerController::create');
+    $routes->post('add/worker', 'WorkerController::create');
 
 
     // calendar 
@@ -32,5 +32,14 @@ $routes->group('api', function($routes) {
         $routes->post('register', 'CustomerController::register');
         $routes->post('login', 'CustomerController::login');
     });
+
+
+    // Booking endpoints
+    $routes->get('bookings', 'BookingController::index');
+
+    $routes->post('book/worker', 'BookingController::create');
+
+    // GET: /api/mybookings/CUST1234509823
+    $routes->get('mybookings/(:any)', 'BookingController::show/$1');
 
 });
