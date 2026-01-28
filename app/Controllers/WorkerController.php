@@ -12,7 +12,7 @@ class WorkerController extends ResourceController
 
     public function create()  
     {
-        // Auth check
+        // authentication check
         $adminId = $this->request->getHeaderLine('X-ADMIN-ID');
 
         if (! $adminId) {
@@ -26,7 +26,7 @@ class WorkerController extends ResourceController
             return $this->failUnauthorized('Invalid Admin');
         }
 
-        // Get request data
+        // get JSON request data
         $data = $this->request->getJSON(true) ?? [];
 
         $requiredField = [
@@ -36,6 +36,7 @@ class WorkerController extends ResourceController
             'phone'
         ];
 
+        // validation that the field should not be empty
         foreach ($requiredField as $field) {
             if (empty($data[$field])) {
                 return $this->failValidationError("$field is required");
@@ -44,10 +45,11 @@ class WorkerController extends ResourceController
 
         $workerModel = new WorkerModel;
 
-        // Logic to generate worker ID
-        $workerId = 'WRK' . date('His');
+        // generate worker ID
+        $timeUnix = time();
+        $workerId = 'WRK' . $timeUnix;
 
-        // prepare insert data
+        // insert data into db
         $insertData = [
             'worker_id'  => $workerId,
             'name'       => $data['name'],
@@ -61,13 +63,14 @@ class WorkerController extends ResourceController
 
         // insert data
         if (! $workerModel->insert($insertData)) {
-            // If it fails, it's likely because the ID already exists (same second)
+            // if it fails, give error message
             return $this->failServerError('Failed to create worker. Please try again in a second.');
         }
 
         // respond
         return $this->respondCreated([
             'status'  => 201,
+            'success' => true,
             'message' => 'Worker created successfully!',
             'data'    => [
                 'worker_id' => $workerId

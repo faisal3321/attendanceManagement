@@ -15,35 +15,44 @@ class Customer extends Migration
                 'unsigned'          => true, 
                 'auto_increment'    => true
             ],
+            'customer_id'    => [
+                'type'              => 'VARCHAR', 
+                'constraint'        => 30, 
+                'unique'            => true
+            ],
             'name'           => [
-                'type'          => 'VARCHAR', 
-                'constraint'    => 100,
-                'null'          => false
+                'type'              => 'VARCHAR', 
+                'constraint'        => 100,
+                'null'              => false
             ],
             'email'          => [
-                'type'          => 'VARCHAR', 
-                'constraint'    => 100, 
-                'unique'        => true,
-                'null'          => false
+                'type'              => 'VARCHAR', 
+                'constraint'        => 100, 
+                'unique'            => true,
+                'null'              => false
             ],
             'password'       => [
-                'type'          => 'VARCHAR', 
-                'constraint'    => 255,
-                'null'          => false
+                'type'              => 'VARCHAR', 
+                'constraint'        => 255,
+                'null'              => false
             ], 
             'phone'          => [
-                'type'          => 'VARCHAR', 
-                'constraint'    => 20, 
-                'unique'        => true,
-                'null'          => false
+                'type'              => 'VARCHAR', 
+                'constraint'        => 20, 
+                'unique'            => true,
+                'null'              => false
+            ],
+            'address'        => [
+                'type'              => 'TEXT', 
+                'null'              => true
             ],
             'created_at'     => [
-                'type'          => 'DATETIME', 
-                'null'          => true
+                'type'              => 'DATETIME', 
+                'null'              => true
             ],
             'updated_at'     => [
-                'type'          => 'DATETIME', 
-                'null'          => true
+                'type'              => 'DATETIME', 
+                'null'              => true
             ],
         ]);
 

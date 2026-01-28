@@ -17,7 +17,7 @@ class Workers extends Migration
             ],
             'worker_id'         => [
                 'type'                  => 'VARCHAR',
-                'constraint'            => 10,
+                'constraint'            => 30,
                 'unique'                => true
             ],
             'name'              => [

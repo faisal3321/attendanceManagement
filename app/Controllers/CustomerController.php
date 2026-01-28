@@ -13,68 +13,89 @@ class CustomerController extends ResourceController
     public function register()
     {
         $model = new CustomerModel();
+        
+        // Get JSON data 
         $data = $this->request->getJSON(true) ?? [];
 
-        // 1. Check if all 4 required fields are present and not empty
-        $required = ['name', 'email', 'password', 'phone'];
-        foreach ($required as $field) {
+        // Validation: all 5 field are required
+        $requiredFields = [
+            'name', 
+            'email', 
+            'password', 
+            'phone', 
+            'address'
+        ];
+
+        foreach ($requiredFields as $field) {
             if (empty($data[$field])) {
                 return $this->failValidationError("$field is required");
             }
         }
 
-        // 2. Hash the password
-        $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+        // customer id generation
+        $timePart = time();
+        $data['customer_id'] = 'CUST' . $timePart;
 
-        // 3. Insert into database
+        // hashing password
+        $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+
+        // inserting data into database 
         if ($model->insert($data)) {
             return $this->respondCreated([
-                'status'  => 201,
-                'success' => true,
-                'message' => 'Customer registered successfully!'
+                'status'   => 201,
+                'success'  => true,
+                'message'  => 'Customer registered successfully!',
+                'data'     => [
+                    'customer_id' => $data['customer_id'],
+                    'name'        => $data['name'],
+                    'email'       => $data['email']
+                ]
             ]);
         }
 
+        // error if something goes wrong
         return $this->fail($model->errors());
     }
 
-    // POST:  /api/customer/login
+
+    // POST: /api/customer/login
     public function login()
     {
         $model = new CustomerModel();
         $data = $this->request->getJSON(true) ?? [];
 
-        // We need (email or phone number) and password
-        $username = $data['username'] ?? ''; // This can be email or phone
-        $password = $data['password'] ?? '';
+        // identity can be phone number or your email
+        $identity = $data['identity'] ?? null; 
+        $password = $data['password'] ?? null;
 
-        if (empty($username) || empty($password)) {
+        if (empty($identity) || empty($password)) {
             return $this->failValidationError('Email/Phone and Password are required');
         }
 
-        // check for email or phone number 
+        // finsing the user by email or phone number
         $customer = $model->groupStart()
-                      ->where('email', $username)
-                      ->orWhere('phone', $username)
-                  ->groupEnd()
-                  ->first();
+                        ->where('email', $identity)
+                        ->orWhere('phone', $identity)
+                    ->groupEnd()
+                    ->first();
 
         if (!$customer) {
-            return $this->failNotFound('User not found');
+            return $this->failNotFound('User with this email or phone is not found. Please register first !');
         }
 
-        // checking if the user password matched with hashed password
+        // verifying the user password with the hashed password
         if (!password_verify($password, $customer['password'])) {
-            return $this->failUnauthorized('Invalid password');
+            return $this->failUnauthorized('Password is incorrect. Please provide the right password');
         }
 
-        // // Remove password from response for safety
+        // // 7. Security: Remove password from the object before returning to user
         // unset($user['password']);
 
         return $this->respond([
             'status'  => 200,
-            'message' => 'Login successful',
-            'data'    => $user
+            'success' => true,
+            'message' => 'Customer logged In Successfully!!!',
+            'data'    => $customer
         ]);
     }
 }

@@ -12,10 +12,12 @@ class CustomerModel extends Model
     protected $returnType       = 'array';
     
     protected $allowedFields    = [
+        'customer_id', 
         'name', 
         'email', 
         'password', 
-        'phone'
+        'phone', 
+        'address'
     ];
 
     
