@@ -9,6 +9,7 @@ class WorkerModel extends Model
     protected $table            = 'workers';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
+    protected $returnType       = 'array';
 
     protected $allowedFields    = [
         'worker_id',
@@ -26,5 +27,7 @@ class WorkerModel extends Model
 
     // Dates
     protected $useTimestamps = true;
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
    
 }

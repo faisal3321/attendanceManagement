@@ -4,24 +4,27 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class SuperAdminModel extends Model
+class CalendarModel extends Model
 {
-    protected $table            = 'superAdmin';
+    protected $table            = 'calendar';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
 
     protected $allowedFields    = [
-        'username', 
-        'password', 
-        'is_super_admin', 
+        'calendar_id', 
+        'calendar_date', 
+        'day', 
+        'month', 
+        'year', 
+        'is_weekend', 
         'created_at', 
         'updated_at'
-        ];
+    ];
 
-    // Date
+    // Dates
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-
+  
 }
