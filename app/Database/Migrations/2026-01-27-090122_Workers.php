@@ -15,7 +15,6 @@ class Workers extends Migration
                 'unsigned'              => true,
                 'auto_increment'        => true
             ],
-            // 6-digit worker ID (WRK000123)
             'worker_id'         => [
                 'type'                  => 'VARCHAR',
                 'constraint'            => 10,
@@ -52,14 +51,13 @@ class Workers extends Migration
                 'constraint'            => 11,
                 'unsigned'              => true
             ],
-            'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
+            'created_at'        => [
+                'type'                  => 'DATETIME',
+                'null'                  => true,
             ],
-
-            'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
+            'updated_at'        => [
+                'type'                  => 'DATETIME',
+                'null'                  => true,
             ],
 
         ]);

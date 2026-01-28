@@ -21,4 +21,7 @@ $routes->group('api', function($routes) {
     // add-worker
     $routes->post('add-worker', 'WorkerController::create');
 
+    // calendar 
+    $routes->get('calendar', 'CalendarController::index');
+
 });

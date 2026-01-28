@@ -20,13 +20,13 @@ class CalendarController extends BaseController
         if (! $todayDateExists) {
 
             // check if today is weekend or not
-            $is_weekend = 0;
+            $isWeekend = 0;
             if($currentDayName === 'Sunday') {
-                $is_weekend = 1;
+                $isWeekend = 1;
             }
 
             $newData = [
-                'calendar_id'   => 'CAL-' . date('Ymd'),
+                'calendar_id'   => 'CAL' . date('Ymd'),
                 'calendar_date' => $todayDate,
                 'day'           => $currentDayName,
                 'month'         => date('F'),
