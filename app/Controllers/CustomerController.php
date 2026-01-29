@@ -64,18 +64,17 @@ class CustomerController extends ResourceController
         $model = new CustomerModel();
         $data = $this->request->getJSON(true) ?? [];
 
-        // identity can be phone number or your email
-        $identity = $data['identity'] ?? null; 
+        // email and password for login of customer
+        $email = $data['email'] ?? null; 
         $password = $data['password'] ?? null;
 
-        if (empty($identity) || empty($password)) {
+        if (empty($email) || empty($password)) {
             return $this->failValidationError('Email/Phone and Password are required');
         }
 
-        // finsing the user by email or phone number
+        // finsing the user by email
         $customer = $model->groupStart()
-                        ->where('email', $identity)
-                        ->orWhere('phone', $identity)
+                        ->where('email', $email)
                     ->groupEnd()
                     ->first();
 

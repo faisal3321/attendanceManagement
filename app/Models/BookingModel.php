@@ -24,7 +24,7 @@ class BookingModel extends Model
     protected $updatedField  = 'updated_at';
 
     
-    // Get bookings by joinjoininged worker and customer data
+    // Get bookings by joining worker and customer data
     public function getFullDetails($bookingId = null)
     {
         $builder = $this->select('bookings.*, workers.name as worker_name, customers.name as customer_name');

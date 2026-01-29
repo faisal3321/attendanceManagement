@@ -11,27 +11,26 @@ class AttendanceController extends ResourceController
 {
     protected $format = 'json';
 
-    /**
-     * MAIN SYNC TASK: 
-     * This takes the date from the Calendar and creates attendance for all active bookings.
-     */
+    
+    // This takes the date from the Calendar and creates attendance for all active bookings.
+    
     public function syncDailyAttendance()
     {
         $attendanceModel = new AttendanceModel();
         $bookingModel    = new BookingModel();
         $calendarModel   = new CalendarModel();
 
-        // 1. Get today's date from the Calendar table
+        // first know today date from calendar
         $today = date('Y-m-d');
         $calendarDate = $calendarModel->where('calendar_date', $today)->first();
 
         if (!$calendarDate) {
-            return $this->fail("Calendar date for today not found. Run Calendar index first.");
+            return $this->fail("Calendar date for today not found. Please hit calendar api first.");
         }
 
         $targetDate = $calendarDate['calendar_date'];
 
-        // 2. Get all bookings to generate daily attendance
+        // know all the booking to generate daily attendance
         $activeBookings = $bookingModel->findAll();
         $syncCount = 0;
 
@@ -65,11 +64,8 @@ class AttendanceController extends ResourceController
         ]);
     }
 
-    /**
-     * CUSTOMER UPDATE:
-     * Customer can only change 'customer_side_attendance'.
-     * The system automatically handles the discrepancy flag.
-     */
+    
+    // customer can only change customer side attendance
     public function updateCustomerStatus()
     {
         $attendanceModel = new AttendanceModel();
@@ -79,16 +75,16 @@ class AttendanceController extends ResourceController
             return $this->failValidationError("Attendance ID is required.");
         }
 
-        // 1. Fetch current record
+        // fetch the current record
         $record = $attendanceModel->find($data['id']);
         if (!$record) return $this->failNotFound("Attendance record not found.");
 
         $newCustomerStatus = (int)$data['customer_side_attendance']; // Expects 0 or 1
 
-        // 2. Logic: If worker_attendance (Admin) doesn't match new customer status, discrepancy = 1
+        // if admin_side and customer_side attendance does not match, show discrepancy = 1 otherwise discrepancy = 0
         $discrepancy = ($record['worker_attendance'] != $newCustomerStatus) ? 1 : 0;
 
-        // 3. Update the restricted fields
+        // update the restricted fields
         $updateData = [
             'customer_side_attendance' => $newCustomerStatus,
             'discrepancy'              => $discrepancy
@@ -98,7 +94,7 @@ class AttendanceController extends ResourceController
             return $this->respond([
                 'status'  => 200,
                 'success' => true,
-                'message' => ($discrepancy == 1) ? "Marked as Absent. Discrepancy flagged for Admin." : "Attendance verified.",
+                'message' => ($discrepancy == 1) ? "Marked as Absent" : "Attendance verified",
                 'data'    => ['discrepancy' => $discrepancy]
             ]);
         }
@@ -106,10 +102,7 @@ class AttendanceController extends ResourceController
         return $this->failServerError("Failed to update status.");
     }
 
-    /**
-     * ADMIN VIEW: 
-     * Get all attendance records with names
-     */
+    // Get all attendance record
     public function index()
     {
         $attendanceModel = new AttendanceModel();
@@ -121,11 +114,7 @@ class AttendanceController extends ResourceController
     }
 
 
-    /**
-     * ADMIN OVERRIDE:
-     * Admin can manually fix worker_attendance, customer_side_attendance, and punch times.
-     * This resolves discrepancies manually.
-     */
+    // admin can manually change admin_side and customer_side attendance as well as punch time
     public function adminOverride()
     {
         $attendanceModel = new AttendanceModel();
@@ -135,15 +124,15 @@ class AttendanceController extends ResourceController
             return $this->failValidationError("Attendance ID is required for override.");
         }
 
-        // 1. Fetch current record
+        // fetch current record
         $record = $attendanceModel->find($data['id']);
         if (!$record) return $this->failNotFound("Attendance record not found.");
 
-        // 2. Prepare update data (uses existing values if fields are missing in JSON)
+        // prepare data update (uses existing values if fields are missing in JSON)
         $w_att = isset($data['worker_attendance']) ? (int)$data['worker_attendance'] : (int)$record['worker_attendance'];
         $c_att = isset($data['customer_side_attendance']) ? (int)$data['customer_side_attendance'] : (int)$record['customer_side_attendance'];
         
-        // 3. Auto-resolve discrepancy if the admin makes them match
+        //  discrepancy get resolved automatically if the attendance get matched
         $discrepancy = ($w_att != $c_att) ? 1 : 0;
 
         $updateData = [
