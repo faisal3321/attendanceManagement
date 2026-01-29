@@ -77,4 +77,30 @@ class WorkerController extends ResourceController
             ]
         ]);
     }
+
+    // for fetching worker at the time of booking
+    public function index()
+    {
+        $workerModel = new WorkerModel();
+        
+        // Get only active workers
+        $workers = $workerModel->where('status', 'active')->findAll();
+
+        if (empty($workers)) {
+            return $this->respond([
+                'status'  => 200,
+                'success' => false,
+                'message' => 'No workers found',
+                'data'    => []
+            ]);
+        }
+
+        return $this->respond([
+            'status'  => 200,
+            'success' => true,
+            'message' => 'Workers retrieved successfully',
+            'data'    => $workers
+        ]);
+    }
+    
 }

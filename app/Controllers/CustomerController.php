@@ -87,7 +87,13 @@ class CustomerController extends ResourceController
             return $this->failUnauthorized('Password is incorrect. Please provide the right password');
         }
 
-        // // 7. Security: Remove password from the object before returning to user
+        // START SESSION AND SAVE ID
+        $session = session();
+        $session->set('customer_id', $customer['customer_id']);
+        $session->set('customer_name', $customer['name']);
+        $session->set('isLoggedIn', true);
+
+        // // remove password from the object before returning to user
         // unset($user['password']);
 
         return $this->respond([

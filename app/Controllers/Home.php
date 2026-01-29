@@ -33,4 +33,14 @@ class Home extends BaseController
     {
         return view('customer/attendance'); 
     }
+
+    public function myBooking()
+    {
+        $session = session(); 
+        
+        if (!$session->get('isLoggedIn')) {
+            return redirect()->to('customer/login');
+        }
+        return view('customer/bookWorker'); 
+    }
 }

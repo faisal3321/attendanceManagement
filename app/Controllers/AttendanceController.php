@@ -152,4 +152,23 @@ class AttendanceController extends ResourceController
 
         return $this->failServerError("Failed to perform override.");
     }
+
+    // GET: /api/attendance/customer/:customerId
+    public function showByCustomer($customerId = null)
+    {
+        $attendanceModel = new AttendanceModel();
+        // Assuming your model has a way to join with worker names
+        $data = $attendanceModel->select('attendance.*, workers.name as worker_name')
+                ->join('workers', 'workers.worker_id = attendance.worker_id')
+                ->where('attendance.customer_id', $customerId)
+                ->orderBy('attendance_date', 'DESC')
+                .findAll();
+
+        return $this->respond([
+            'status'  => 200,
+            'success' => true,
+            'data'    => $data
+        ]);
+    }
+    
 }

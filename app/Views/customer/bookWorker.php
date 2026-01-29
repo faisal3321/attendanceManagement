@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <title>Book a Worker</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,10 +26,11 @@
                 <h2 class="text-center mb-4">Book a Worker</h2>
                 
                 <form id="bookingForm" class="border p-4 rounded bg-white shadow-sm">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Your Customer ID:</label>
-                        <input type="text" name="customer_id" class="form-control" placeholder="Enter your ID (e.g. CUST123)" required>
+    
+                    <input type="hidden" name="customer_id" value="<?= session()->get('customer_id') ?>">
+
+                    <div class="mb-3 text-center">
+                        <p class="text-muted">Booking as: <strong><?= session()->get('customer_name') ?></strong></p>
                     </div>
 
                     <div class="mb-3">
@@ -38,6 +39,8 @@
                             <option value="">Loading workers...</option>
                         </select>
                     </div>
+    
+    
 
                     <div class="mb-4">
                         <label class="form-label">Duration (Months):</label>
@@ -93,7 +96,7 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            fetch('<?= base_url('api/book-worker') ?>', {
+            fetch('<?= base_url('api/book/worker') ?>', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
