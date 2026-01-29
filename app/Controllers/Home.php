@@ -8,4 +8,29 @@ class Home extends BaseController
     {
         return view('welcome_message');
     }
+
+    public function register()
+    {
+        return view('customer/register'); 
+    }
+
+    public function login()
+    {
+        return view('customer/login'); 
+    }
+
+    public function dashboard()
+    {
+        return view('customer/dashboard'); 
+    }
+
+    public function booking()
+    {
+        return view('customer/bookWorker'); 
+    }
+
+    public function attendanceCust()
+    {
+        return view('customer/attendance'); 
+    }
 }
