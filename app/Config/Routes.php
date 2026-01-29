@@ -5,7 +5,7 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+// $routes->get('/', 'Home::index');
 
 // restful api routes
 $routes->group('api', function($routes) {
@@ -46,5 +46,28 @@ $routes->group('api', function($routes) {
     $routes->post('attendance/sync', 'AttendanceController::syncDailyAttendance');
     $routes->post('attendance/customer/update', 'AttendanceController::updateCustomerStatus');
     $routes->put('attendance/admin/override', 'AttendanceController::adminOverride');
-
 });
+
+
+// FRONTEND API ENDPOINTS
+
+$routes->get('/', 'ViewController::home');
+
+// Customer Views
+$routes->get('customer/register', 'ViewController::customerRegister');
+$routes->get('customer/login', 'ViewController::customerLogin');
+$routes->get('customer/dashboard', 'ViewController::customerDashboard');
+$routes->get('customer/book-worker', 'ViewController::bookWorker');
+$routes->get('customer/mark-attendance', 'ViewController::markAttendance');
+$routes->get('customer/logout', 'ViewController::customerLogout');
+
+// Admin Views
+$routes->get('admin/login', 'ViewController::adminLogin');
+$routes->get('admin/dashboard', 'ViewController::adminDashboard');
+$routes->get('admin/add-worker', 'ViewController::addWorker');
+$routes->get('admin/manage-attendance', 'ViewController::manageAttendance');
+$routes->get('admin/manage-customers', 'ViewController::manageCustomers');
+$routes->get('admin/logout', 'ViewController::adminLogout');
+
+// Session handling
+$routes->post('set-session', 'ViewController::setSession');
