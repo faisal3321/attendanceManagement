@@ -8,16 +8,29 @@
     <style>
         .table > tbody > tr > td {
             vertical-align: middle;
-            padding-top: 25px; /* Wide rows */
+            padding-top: 25px; 
             padding-bottom: 25px;
             color: #444;
+            /* Prevents the text from jumping to the next line */
+            white-space: nowrap; 
         }
         .worker-id-tag {
             font-family: 'Courier New', monospace;
             font-weight: bold;
             background: #f0f2f5;
-            padding: 4px 8px;
+            padding: 4px 12px; 
             border-radius: 4px;
+            /* Ensures 13-digit ID stays in one line */
+            white-space: nowrap;
+            display: inline-block;
+            letter-spacing: 0.5px;
+        }
+        /* Custom class to handle address truncation properly */
+        .address-cell {
+            max-width: 250px; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            white-space: nowrap;
         }
         .btn-manage { border-radius: 20px; padding: 5px 15px; font-size: 0.85rem; }
     </style>
@@ -64,6 +77,7 @@
             tbody.innerHTML = '';
 
             if (result.success && result.data.length > 0) {
+                // This is the part we updated to fix the ID display
                 result.data.forEach(worker => {
                     tbody.innerHTML += `
                         <tr>
@@ -72,7 +86,7 @@
                             <td class="fw-bold">${worker.name}</td>
                             <td>${worker.age} Yrs</td>
                             <td>${worker.phone}</td>
-                            <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <td class="text-muted address-cell" title="${worker.address || ''}">
                                 ${worker.address || 'N/A'}
                             </td>
                             <td class="text-end pe-4">
@@ -102,17 +116,13 @@
             try {
                 const response = await fetch(`<?= base_url('api/workers/delete/') ?>${id}`, {
                     method: 'DELETE',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
 
                 const result = await response.json();
-
                 if (result.success) {
-                    // Show a quick success message and refresh the table
                     alert(result.message);
-                    fetchWorkers(); // Reloads the table data
+                    fetchWorkers(); 
                 } else {
                     alert(result.message || 'Failed to delete worker');
                 }
@@ -123,7 +133,6 @@
         }
     }
 
-    // Load data on page load
     fetchWorkers();
 </script>
 
