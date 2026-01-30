@@ -64,4 +64,19 @@ class Home extends BaseController
     {
         return view('admin/workerList');
     }
+
+    public function workerList()
+    {
+        if (!session()->get('logged_in')) {
+            return redirect()->to(base_url('admin/login'));
+        }
+
+        $workerModel = new \App\Models\WorkerModel();
+        // Fetch all workers to show both active and inactive
+        $data['workers'] = $workerModel->orderBy('created_at', 'DESC')->findAll();
+
+        return view('admin/worker_list', $data);
+    }
+
+
 }

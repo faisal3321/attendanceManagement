@@ -8,6 +8,17 @@
 </head>
 <body class="bg-light">
 
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm py-3">
+        <div class="container">
+            <div class="ms-auto">
+                <a href="<?= base_url('admin/workerList') ?>" class="btn btn-outline-primary btn-sm px-4 rounded-pill fw-semibold">
+                    <span id="spinner" class="spinner-border spinner-border-sm d-none"></span>
+                    <i class="bi bi-people-fill me-1"></i> Show Worker List
+                </a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -54,6 +65,7 @@
                             <button type="submit" class="btn btn-success w-100" id="submitBtn">
                                 <span id="spinner" class="spinner-border spinner-border-sm d-none"></span> Save Worker
                             </button>
+                            
                         </form>
                     </div>
                 </div>

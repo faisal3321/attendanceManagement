@@ -62,3 +62,4 @@ $routes->get('admin/login', 'Home::adminLogin');
 $routes->get('admin/dashboard', 'Home::adminDashboard');
 $routes->get('admin/addWorker', 'Home::adminAddWorker');
 $routes->get('admin/workerList', 'Home::adminWorkerList');
+$routes->get('admin/attendance', 'Home::adminAttendance');
