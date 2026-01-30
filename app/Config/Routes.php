@@ -29,6 +29,8 @@ $routes->group('api', function($routes) {
 
     // calendar 
     $routes->get('calendar', 'CalendarController::index');
+    // generate past date calendar
+    $routes->post('calendar/generate', 'CalendarController::generateRange');
 
     // Customer Endpoints
     $routes->group('customer', function($routes) {

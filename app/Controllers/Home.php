@@ -90,5 +90,10 @@ class Home extends BaseController
         return view('admin/edit_worker', $data);
     }
 
+    public function adminAttendance()
+    {
+        return view('admin/attendance');
+    }
+
 
 }

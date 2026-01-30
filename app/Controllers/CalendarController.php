@@ -3,11 +3,88 @@
 namespace App\Controllers;
 
 use App\Models\CalendarModel;
+use App\Models\SuperAdminModel; // Added this
 use App\Controllers\BaseController;
 use App\Controllers\AttendanceController;
+use CodeIgniter\API\ResponseTrait; // Added this
 
 class CalendarController extends BaseController
 {
+    // Now the trait will be found correctly
+    use ResponseTrait;
+
+    public function generateRange()
+    {
+        // Authentication Check
+        $adminId = $this->request->getHeaderLine('X-ADMIN-ID');
+        if (!$adminId) {
+            return $this->failUnauthorized('Admin ID is required');
+        }
+
+        $adminModel = new SuperAdminModel();
+        if (!$adminModel->find($adminId)) {
+            return $this->failUnauthorized('Invalid Admin Access');
+        }
+
+        // Get Input Data
+        $data = $this->request->getJSON(true);
+
+        $startDate = $data['start_date'] ?? null; // format: YYYY-MM-DD
+        $endDate   = $data['end_date'] ?? null;   // format: YYYY-MM-DD
+
+        if (!$startDate || !$endDate) {
+            return $this->failValidationError('Start and End dates are required');
+        }
+
+        $model = new CalendarModel();
+        $today = date('Y-m-d');
+        
+        // The Generation Loop
+        $current = strtotime($startDate);
+        $last    = strtotime($endDate);
+        $count   = 0;
+
+        while ($current <= $last) {
+            $dateStr = date('Y-m-d', $current);
+            
+            // Check if date already exists
+            $exists = $model->where('calendar_date', $dateStr)->first();
+
+            if (!$exists) {
+                $dayName = date('l', $current);
+                $isWeekend = ($dayName === 'Sunday') ? 1 : 0;
+
+                $newData = [
+                    'calendar_id'   => 'CAL' . date('Ymd', $current),
+                    'calendar_date' => $dateStr,
+                    'day'           => $dayName,
+                    'month'         => date('F', $current),
+                    'year'          => date('Y', $current),
+                    'is_weekend'    => $isWeekend,
+                ];
+
+                $model->insert($newData);
+                $count++;
+
+                // Conditional Sync Logic
+                // Only sync attendance if the date is Today or in the Future
+                if ($dateStr >= $today) {
+                    $att = new AttendanceController();
+                    $att->syncDailyAttendance();
+                }
+            }
+            
+            // Move to next day
+            $current = strtotime('+1 day', $current);
+        }
+
+        return $this->respond([
+            'status'  => 200,
+            'success' => true,
+            'message' => "Successfully generated $count new days. Future dates were synced with attendance.",
+        ]);
+    }
+
     public function index()
     {
         $model = new CalendarModel();
@@ -19,12 +96,7 @@ class CalendarController extends BaseController
         $todayDateExists = $model->where('calendar_date', $todayDate)->first();
 
         if (! $todayDateExists) {
-
-            // check if today is weekend or not
-            $isWeekend = 0;
-            if($currentDayName === 'Sunday') {
-                $isWeekend = 1;
-            }
+            $isWeekend = ($currentDayName === 'Sunday') ? 1 : 0;
 
             $newData = [
                 'calendar_id'   => 'CAL' . date('Ymd'),
@@ -37,14 +109,10 @@ class CalendarController extends BaseController
 
             $model->insert($newData);
 
-            // trigger attendance here
-            // This syncs all workers for the newly created date
             $att = new AttendanceController();
             $att->syncDailyAttendance();
-
         }
 
-        // show all latest date at the top 
         $allData = $model->orderBy('calendar_date', 'DESC')->findAll();
 
         return $this->response->setJSON($allData);
