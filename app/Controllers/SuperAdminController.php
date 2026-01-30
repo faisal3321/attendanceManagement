@@ -96,6 +96,13 @@ class SuperAdminController extends ResourceController
             return $this->failUnauthorized('Invalid credentials');
         }
 
+        session()->set([
+            'admin_id'   => $admin['id'],
+            'admin_name' => $admin['username'],
+            'is_super'   => (bool) $admin['is_super_admin'],
+            'logged_in'  => true
+        ]);
+
         return $this->respond([
             'status'  => 200,
             'success' => true,

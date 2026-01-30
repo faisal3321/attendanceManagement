@@ -162,7 +162,7 @@ class AttendanceController extends ResourceController
                 ->join('workers', 'workers.worker_id = attendance.worker_id')
                 ->where('attendance.customer_id', $customerId)
                 ->orderBy('attendance_date', 'DESC')
-                .findAll();
+                ->findAll();
 
         return $this->respond([
             'status'  => 200,

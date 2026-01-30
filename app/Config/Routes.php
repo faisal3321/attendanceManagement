@@ -48,11 +48,17 @@ $routes->group('api', function($routes) {
 
 // FRONTEND API ENDPOINTS
 
+// CUSTOMER
 $routes->get('customer/register', 'Home::register');
 $routes->get('customer/login', 'Home::login');
 $routes->get('customer/bookWorker', 'Home::booking');
 $routes->get('customer/dashboard', 'Home::dashboard');
 $routes->get('customer/attendance', 'Home::attendanceCust');
 $routes->get('api/workers', 'WorkerController::index');
-$routes->get('attendance/customer/(:any)', 'AttendanceController::showByCustomer/$1');
+$routes->get('api/attendance/customer/(:any)', 'AttendanceController::showByCustomer/$1');
 
+// ADMIN
+$routes->get('admin/login', 'Home::adminLogin');
+$routes->get('admin/dashboard', 'Home::adminDashboard');
+$routes->get('admin/addWorker', 'Home::adminAddWorker');
+$routes->get('admin/workerList', 'Home::adminWorkerList');

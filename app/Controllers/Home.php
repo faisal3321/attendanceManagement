@@ -43,4 +43,25 @@ class Home extends BaseController
         }
         return view('customer/bookWorker'); 
     }
+
+    // admin view
+    public function adminLogin() 
+    {
+        return view('admin/login');
+    }
+
+    public function adminDashboard() 
+    {
+        return view('admin/dashboard');
+    }
+
+    public function adminAddWorker() 
+    {
+        return view('admin/addWorker');
+    }
+
+    public function adminWorkerList() 
+    {
+        return view('admin/workerList');
+    }
 }

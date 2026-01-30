@@ -12,9 +12,9 @@
         <div class="container">
             <a class="navbar-brand fw-bold" href="<?= base_url('customer/dashboard') ?>">Attendees</a>
             <div class="ms-auto">
-                <span class="me-3 text-muted small">Customer: <strong><?= session()->get('customer_name') ?></strong></span>
                 <a href="<?= base_url('customer/dashboard') ?>" class="btn btn-sm btn-outline-secondary">Back</a>
             </div>
+            <!-- <button class="btn btn-success btn-sm" onclick="syncAttendance()">Sync Today's Attendance</button> -->
         </div>
     </nav>
 
@@ -34,8 +34,8 @@
                                     <th>Date</th>
                                     <th>Worker Name</th>
                                     <th>Punch In/Out</th>
-                                    <th>Status (Admin)</th>
-                                    <th>Your Verification</th>
+                                    <th>Worker_Attendance</th>
+                                    <th>Customer_Attendance</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -98,28 +98,45 @@
             }
         }
 
-        async function updateStatus(attendanceId, status) {
+
+       async function updateStatus(attendanceId, status) {
             try {
                 const response = await fetch(`<?= base_url('api/attendance/customer/update') ?>`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         id: attendanceId,
-                        customer_side_attendance: status
+                        customer_side_attendance: parseInt(status) 
                     })
                 });
+                
                 const result = await response.json();
+                
                 if(result.success) {
-                    alert(result.message);
-                    fetchAttendance(); // Refresh table
+                    console.log(result.message); 
+                    fetchAttendance(); 
+                } else {
+                    alert(result.messages.error || "Update failed");
                 }
             } catch (error) {
-                alert("Update failed");
+                alert("Network error. Please try again.");
             }
         }
 
-        // Initial Load
+
+        // async function syncAttendance() {
+        //     try {
+        //         const response = await fetch(`<?= base_url('api/attendance/sync') ?>`, { method: 'POST' });
+        //         const result = await response.json();
+        //         alert(result.message);
+        //         fetchAttendance(); // Reload the table
+        //     } catch (error) {
+        //         console.error("Sync failed", error);
+        //     }
+        // }
+        
         window.onload = fetchAttendance;
     </script>
+    
 </body>
 </html>
