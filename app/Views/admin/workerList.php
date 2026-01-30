@@ -8,65 +8,47 @@
     <style>
         .table > tbody > tr > td {
             vertical-align: middle;
-            padding-top: 15px;
-            padding-bottom: 15px;
+            padding-top: 25px; /* Wide rows */
+            padding-bottom: 25px;
+            color: #444;
         }
-        .action-btn { margin-right: 5px; }
+        .worker-id-tag {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            background: #f0f2f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .btn-manage { border-radius: 20px; padding: 5px 15px; font-size: 0.85rem; }
     </style>
 </head>
 <body class="bg-light">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="<?= base_url('admin/dashboard') ?>">Admin Dashboard</a>
-    </div>
-</nav>
-
-<div class="container">
+<div class="container-fluid py-5 px-4">
     <div class="card shadow-sm border-0">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0 fw-bold text-primary">Worker Directory</h5>
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i> Worker Directory</h5>
+            <a href="<?= base_url('admin/addWorker') ?>" class="btn btn-primary btn-sm">+ Add Worker</a>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0" id="workerTable">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-4">Worker ID</th>
+                        <th class="ps-4">ID</th>
+                        <th>Worker ID</th>
                         <th>Name</th>
-                        <th>Contact</th>
-                        <th>Status</th>
+                        <th>Age</th>
+                        <th>Phone</th>
+                        <th>Address</th>
                         <th class="text-end pe-4">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php if(!empty($workers)): ?>
-                        <?php foreach($workers as $worker): ?>
-                        <tr>
-                            <td class="ps-4 fw-bold text-muted"><?= $worker['worker_id'] ?></td>
-                            <td>
-                                <div class="fw-bold"><?= $worker['name'] ?></div>
-                                <small class="text-muted"><?= $worker['gender'] ?> | Age: <?= $worker['age'] ?></small>
-                            </td>
-                            <td><?= $worker['phone'] ?></td>
-                            <td><span class="badge bg-success-subtle text-success border border-success-subtle">Active</span></td>
-                            <td class="text-end pe-4">
-                                <a href="<?= base_url('admin/attendance/'.$worker['worker_id']) ?>" class="btn btn-sm btn-outline-primary action-btn">
-                                    Manage Attendance
-                                </a>
-                                <a href="<?= base_url('admin/workers/edit/'.$worker['id']) ?>" class="btn btn-sm btn-light text-warning border action-btn">
-                                    <i class="bi bi-pencil-fill"></i>
-                                </a>
-                                <button onclick="deleteWorker(<?= $worker['id'] ?>)" class="btn btn-sm btn-light text-danger border">
-                                    <i class="bi bi-trash3-fill"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">No workers found in the system.</td>
-                        </tr>
-                    <?php endif; ?>
+                <tbody id="workerTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -74,12 +56,75 @@
 </div>
 
 <script>
-    function deleteWorker(id) {
-        if(confirm('Are you sure you want to delete this worker?')) {
-            // You can implement the AJAX delete here later
-            console.log('Deleting worker with ID:', id);
+    async function fetchWorkers() {
+        try {
+            const response = await fetch('<?= base_url('api/workers') ?>');
+            const result = await response.json();
+            const tbody = document.getElementById('workerTableBody');
+            tbody.innerHTML = '';
+
+            if (result.success && result.data.length > 0) {
+                result.data.forEach(worker => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="ps-4 text-muted small">${worker.id}</td>
+                            <td><span class="worker-id-tag">${worker.worker_id}</span></td>
+                            <td class="fw-bold">${worker.name}</td>
+                            <td>${worker.age} Yrs</td>
+                            <td>${worker.phone}</td>
+                            <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${worker.address || 'N/A'}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="<?= base_url('admin/attendance/') ?>${worker.worker_id}" class="btn btn-primary btn-manage me-2">
+                                    Manage Attendance
+                                </a>
+                                <a href="<?= base_url('admin/workers/edit/') ?>${worker.id}" class="text-warning me-3" title="Edit">
+                                    <i class="bi bi-pencil-square fs-5"></i>
+                                </a>
+                                <a href="javascript:void(0)" onclick="deleteWorker(${worker.id})" class="text-danger" title="Delete">
+                                    <i class="bi bi-trash3-fill fs-5"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No workers found.</td></tr>';
+            }
+        } catch (error) {
+            console.error("Error fetching workers:", error);
         }
     }
+
+    async function deleteWorker(id) {
+        if (confirm('Are you sure you want to delete this worker? This action cannot be undone.')) {
+            try {
+                const response = await fetch(`<?= base_url('api/workers/delete/') ?>${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Show a quick success message and refresh the table
+                    alert(result.message);
+                    fetchWorkers(); // Reloads the table data
+                } else {
+                    alert(result.message || 'Failed to delete worker');
+                }
+            } catch (error) {
+                console.error("Error deleting worker:", error);
+                alert("An error occurred while deleting the worker.");
+            }
+        }
+    }
+
+    // Load data on page load
+    fetchWorkers();
 </script>
 
 </body>

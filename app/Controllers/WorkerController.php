@@ -102,5 +102,55 @@ class WorkerController extends ResourceController
             'data'    => $workers
         ]);
     }
+
+    // Delete worker
+    public function delete($id = null)
+    {
+        $model = new WorkerModel();
+        $worker = $model->find($id);
+
+        if (!$worker) {
+            return $this->failNotFound('Worker not found');
+        }
+
+        if ($model->delete($id)) {
+            return $this->respondDeleted([
+                'status'  => 200,
+                'success' => true,
+                'message' => 'Worker deleted successfully'
+            ]);
+        }
+        return $this->failServerError('Could not delete worker');
+    }
+
+    // Update worker details
+    public function update($id = null)
+    {
+        $model = new WorkerModel();
+        $worker = $model->find($id);
+
+        if (!$worker) {
+            return $this->failNotFound('Worker not found');
+        }
+
+        $data = $this->request->getJSON(true);
+        
+        // Fields allowed to be updated
+        $updateData = [
+            'name'    => $data['name'],
+            'age'     => (int) $data['age'],
+            'phone'   => $data['phone'],
+            'address' => $data['address'] ?? null,
+        ];
+
+        if ($model->update($id, $updateData)) {
+            return $this->respond([
+                'status'  => 200,
+                'success' => true,
+                'message' => 'Worker updated successfully'
+            ]);
+        }
+        return $this->failServerError('Failed to update worker');
+    }
     
 }

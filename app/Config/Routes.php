@@ -22,6 +22,10 @@ $routes->group('api', function($routes) {
 
     // add-worker
     $routes->post('add/worker', 'WorkerController::create');
+    // Delete worker 
+    $routes->delete('workers/delete/(:num)', 'WorkerController::delete/$1');
+    // Update worker
+    $routes->put('workers/update/(:num)', 'WorkerController::update/$1');
 
     // calendar 
     $routes->get('calendar', 'CalendarController::index');
@@ -63,3 +67,5 @@ $routes->get('admin/dashboard', 'Home::adminDashboard');
 $routes->get('admin/addWorker', 'Home::adminAddWorker');
 $routes->get('admin/workerList', 'Home::adminWorkerList');
 $routes->get('admin/attendance', 'Home::adminAttendance');
+$routes->get('api/workers', 'WorkerController::index');
+$routes->get('admin/workers/edit/(:num)', 'Home::editWorker/$1');

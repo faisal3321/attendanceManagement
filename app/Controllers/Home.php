@@ -78,5 +78,17 @@ class Home extends BaseController
         return view('admin/worker_list', $data);
     }
 
+    public function editWorker($id)
+    {
+        $model = new \App\Models\WorkerModel();
+        $data['worker'] = $model->find($id);
+
+        if (!$data['worker']) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        return view('admin/edit_worker', $data);
+    }
+
 
 }
