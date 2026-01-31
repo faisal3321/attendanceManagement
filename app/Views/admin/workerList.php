@@ -90,7 +90,7 @@
                                 ${worker.address || 'N/A'}
                             </td>
                             <td class="text-end pe-4">
-                                <a href="<?= base_url('admin/attendance') ?>" class="btn btn-primary btn-manage me-2">
+                                <a href="<?= base_url('admin/attendance') ?>?worker_id=${worker.worker_id}" class="btn btn-primary btn-manage me-2">
                                     Manage Attendance
                                 </a>
                                 <a href="<?= base_url('admin/workers/edit/') ?>${worker.id}" class="text-warning me-3" title="Edit">

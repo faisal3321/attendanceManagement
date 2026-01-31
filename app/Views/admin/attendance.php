@@ -27,27 +27,23 @@
         <div class="card-body p-4">
             <h6 class="fw-bold text-uppercase text-muted mb-3">Filter & Sync Date Range</h6>
             <div class="row g-3 align-items-end">
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">Worker ID</label>
-                    <input type="text" id="filterWorkerId" class="form-control" placeholder="worker id">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">From</label>
+                
+                <input type="hidden" id="filterWorkerId">
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">From Date</label>
                     <input type="date" id="startDate" class="form-control">
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">To</label>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">To Date</label>
                     <input type="date" id="endDate" class="form-control">
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">Admin Header ID</label>
-                    <input type="text" id="adminId" class="form-control" placeholder="X-ADMIN-ID">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Admin ID</label>
+                    <input type="text" id="adminId" class="form-control" placeholder="X-ADMIN-ID" value="<?= session()->get('admin_id') ?>">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <button onclick="generateAndFilter()" class="btn btn-primary w-100 fw-bold">Apply Filter</button>
-                </div>
-                <div class="col-md-2">
-                    <button onclick="clearFilter()" class="btn btn-outline-secondary w-100 fw-bold">Clear</button>
                 </div>
             </div>
         </div>
@@ -68,7 +64,7 @@
                 </thead>
                 <tbody id="logs">
                     <tr>
-                        <td colspan="6" class="empty-msg">No data to show. Please enter filters to fetch records.</td>
+                        <td colspan="6" class="empty-msg">No data to show. Please select a date range and click Apply.</td>
                     </tr>
                 </tbody>
             </table>
@@ -90,34 +86,31 @@
         return 'select-na';
     }
 
-    function clearFilter() {
-        document.getElementById('filterWorkerId').value = '';
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
-        currentFilter = { start: '', end: '', workerId: '' };
-        document.getElementById('logs').innerHTML = `<tr><td colspan="6" class="empty-msg">No data to show. Please enter filters to fetch records.</td></tr>`;
-    }
-
     async function generateAndFilter() {
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
         const workerId = document.getElementById('filterWorkerId').value;
         const adminId = document.getElementById('adminId').value;
 
-        if(!start || !end || !workerId) {
-            return alert("Worker ID, Start, and End dates are required.");
+        if(!start || !end) {
+            return alert("Please select both Start and End dates.");
+        }
+        
+        if(!workerId) {
+            return alert("No worker selected. Please go back to the worker list.");
         }
 
         currentFilter = { start, end, workerId: workerId.trim() };
         document.getElementById('logs').innerHTML = `<tr><td colspan="6" class="empty-msg">Fetching data...</td></tr>`;
 
         try {
+            // This syncs the dates in your calendar table
             await fetch(API_CALENDAR, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-ADMIN-ID': adminId },
                 body: JSON.stringify({ start_date: start, end_date: end })
             });
-
+            // This pulls the data to show in the table
             loadLogs();
         } catch (error) {
             alert("Connection error.");
@@ -125,8 +118,6 @@
     }
 
     async function loadLogs() {
-        if (!currentFilter.workerId) return;
-
         const res = await fetch(API_ATTENDANCE);
         const json = await res.json();
         const tbody = document.getElementById('logs');
@@ -143,9 +134,10 @@
         }
 
         tbody.innerHTML = filteredData.map(row => {
-            // FIX: Create a unique key by combining ID and Date (removing dashes from date)
             const uniqueKey = row.id + "_" + row.actual_date.replace(/-/g, "");
-
+            
+            // Logic: The 'selected' attribute is driven by 'row.worker_attendance' 
+            // which comes directly from your database.
             return `
                 <tr>
                     <td class="ps-4 text-muted small">${row.id}</td>
@@ -183,7 +175,6 @@
         const adminVal = document.getElementById(`adm-${uniqueKey}`).value;
         const customerVal = document.getElementById(`cus-${uniqueKey}`).value;
         const btn = document.getElementById(`btn-${uniqueKey}`);
-
         btn.disabled = true;
         btn.innerText = "...";
 
@@ -192,15 +183,16 @@
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    id: dbId, // Real DB ID for backend
+                    id: dbId,
                     worker_attendance: parseInt(adminVal),
                     customer_side_attendance: parseInt(customerVal)
                 })
             });
-
             const result = await res.json();
             if(result.success) {
-                await loadLogs(); 
+                // IMPORTANT: After a successful update, we do NOT need to refresh 
+                // the whole table if you want to avoid visual jumps. 
+                // The values are already saved in the DB.
                 alert("Data saved successfully!");
             } else {
                 alert("Server error: " + result.message);
@@ -212,6 +204,18 @@
             btn.innerText = "Update";
         }
     }
+
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const prefilledId = getQueryParam('worker_id');
+        if (prefilledId) {
+            document.getElementById('filterWorkerId').value = prefilledId;
+        }
+    });
 </script>
 </body>
 </html>
