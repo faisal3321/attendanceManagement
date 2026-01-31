@@ -4,20 +4,36 @@
     <meta charset="UTF-8">
     <title>Admin Attendance Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body { background-color: #f4f7f6; font-family: 'Inter', sans-serif; }
-        .table-card, .filter-card { border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .status-select {
-            padding: 5px 10px; border-radius: 6px; font-size: 0.85rem;
-            font-weight: 600; border: 1px solid #ddd; cursor: pointer; width: 100%;
+        .table-card, .filter-card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
-        .select-present { background-color: #e6f4ea; color: #1e7e34; border-color: #c3e6cb; }
-        .select-absent { background-color: #fce8e6; color: #d93025; border-color: #f5c6cb; }
-        .select-half { background-color: #fff4e5; color: #b05e00; border-color: #ffeeba; }
-        .select-na { background-color: #f1f3f4; color: #5f6368; border-color: #ddd; }
-        .empty-msg { padding: 40px; text-align: center; color: #6c757d; font-style: italic; }
+        .status-select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            width: 100%;
+        }
+        .select-present { background:#e6f4ea; color:#1e7e34; }
+        .select-absent  { background:#fce8e6; color:#d93025; }
+        .select-half    { background:#fff4e5; color:#b05e00; }
+        .select-na      { background:#f1f3f4; color:#5f6368; }
+        .empty-msg {
+            padding: 40px;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
     </style>
 </head>
+
 <body>
 
 <div class="container py-5">
@@ -26,25 +42,34 @@
     <div class="card filter-card mb-4">
         <div class="card-body p-4">
             <h6 class="fw-bold text-uppercase text-muted mb-3">Filter & Sync Date Range</h6>
+
             <div class="row g-3 align-items-end">
-                
+
                 <input type="hidden" id="filterWorkerId">
 
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">From Date</label>
+                    <label class="form-label fw-bold small">From Date</label>
                     <input type="date" id="startDate" class="form-control">
                 </div>
+
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">To Date</label>
+                    <label class="form-label fw-bold small">To Date</label>
                     <input type="date" id="endDate" class="form-control">
                 </div>
+
                 <div class="col-md-3">
-                    <label class="form-label small fw-bold">Admin ID</label>
-                    <input type="text" id="adminId" class="form-control" placeholder="X-ADMIN-ID" value="<?= session()->get('admin_id') ?>">
+                    <label class="form-label fw-bold small">Admin ID</label>
+                    <input type="text" id="adminId" class="form-control"
+                           value="<?= session()->get('admin_id') ?>">
                 </div>
+
                 <div class="col-md-3">
-                    <button onclick="generateAndFilter()" class="btn btn-primary w-100 fw-bold">Apply Filter</button>
+                    <button onclick="generateAndFilter()"
+                            class="btn btn-primary w-100 fw-bold">
+                        Apply Filter
+                    </button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -56,15 +81,15 @@
                     <tr>
                         <th class="ps-4">ID</th>
                         <th>Date</th>
-                        <th>Worker Name</th>
-                        <th>Admin Status</th>
-                        <th>Customer Status</th>
-                        <th class="text-end pe-4">Actions</th>
+                        <th>Worker</th>
+                        <th>Admin</th>
+                        <th>Customer</th>
+                        <th class="text-end pe-4">Action</th>
                     </tr>
                 </thead>
                 <tbody id="logs">
                     <tr>
-                        <td colspan="6" class="empty-msg">No data to show. Please select a date range and click Apply.</td>
+                        <td colspan="6" class="empty-msg">Loading attendance…</td>
                     </tr>
                 </tbody>
             </table>
@@ -73,149 +98,143 @@
 </div>
 
 <script>
-    const API_ATTENDANCE = "<?= base_url('api/attendance') ?>";
-    const API_CALENDAR = "<?= base_url('api/calendar/generate') ?>";
+const API_ATTENDANCE = "<?= base_url('api/attendance') ?>";
+const API_CALENDAR   = "<?= base_url('api/calendar/generate') ?>";
 
-    let currentFilter = { start: '', end: '', workerId: '' };
+let currentFilter = { start:'', end:'', workerId:'' };
+let autoDateSet = false;
 
-    function getStatusClass(val) {
-        val = parseInt(val);
-        if (val === 1) return 'select-present';
-        if (val === 2) return 'select-absent';
-        if (val === 3) return 'select-half';
-        return 'select-na';
-    }
+/* ---------- helpers ---------- */
 
-    async function generateAndFilter() {
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
-        const workerId = document.getElementById('filterWorkerId').value;
-        const adminId = document.getElementById('adminId').value;
+function getStatusClass(v) {
+    v = parseInt(v);
+    if (v === 1) return 'select-present';
+    if (v === 2) return 'select-absent';
+    if (v === 3) return 'select-half';
+    return 'select-na';
+}
 
-        if(!start || !end) {
-            return alert("Please select both Start and End dates.");
-        }
-        
-        if(!workerId) {
-            return alert("No worker selected. Please go back to the worker list.");
-        }
+function getQueryParam(p) {
+    return new URLSearchParams(window.location.search).get(p);
+}
 
-        currentFilter = { start, end, workerId: workerId.trim() };
-        document.getElementById('logs').innerHTML = `<tr><td colspan="6" class="empty-msg">Fetching data...</td></tr>`;
+/* ---------- main logic ---------- */
 
-        try {
-            // This syncs the dates in your calendar table
-            await fetch(API_CALENDAR, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-ADMIN-ID': adminId },
-                body: JSON.stringify({ start_date: start, end_date: end })
-            });
-            // This pulls the data to show in the table
-            loadLogs();
-        } catch (error) {
-            alert("Connection error.");
-        }
-    }
+async function generateAndFilter() {
+    const start    = document.getElementById('startDate').value;
+    const end      = document.getElementById('endDate').value;
+    const workerId = document.getElementById('filterWorkerId').value;
+    const adminId  = document.getElementById('adminId').value;
 
-    async function loadLogs() {
-        const res = await fetch(API_ATTENDANCE);
-        const json = await res.json();
-        const tbody = document.getElementById('logs');
-        
-        const filteredData = json.data.filter(row => {
-            const dateMatch = row.actual_date >= currentFilter.start && row.actual_date <= currentFilter.end;
-            const workerMatch = row.worker_id.toString() === currentFilter.workerId;
-            return dateMatch && workerMatch;
+    if (!workerId) return alert("No worker selected");
+
+    currentFilter = { start, end, workerId: workerId.trim() };
+
+    // ✅ persist selection for refresh
+    sessionStorage.setItem('attendance_start', start);
+    sessionStorage.setItem('attendance_end', end);
+
+    document.getElementById('logs').innerHTML =
+        `<tr><td colspan="6" class="empty-msg">Fetching data…</td></tr>`;
+
+    if (start && end) {
+        await fetch(API_CALENDAR, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-ADMIN-ID': adminId
+            },
+            body: JSON.stringify({ start_date: start, end_date: end })
         });
-
-        if (filteredData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="empty-msg">No records found for this worker in the selected range.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = filteredData.map(row => {
-            const uniqueKey = row.id + "_" + row.actual_date.replace(/-/g, "");
-            
-            // Logic: The 'selected' attribute is driven by 'row.worker_attendance' 
-            // which comes directly from your database.
-            return `
-                <tr>
-                    <td class="ps-4 text-muted small">${row.id}</td>
-                    <td><strong>${row.actual_date}</strong></td>
-                    <td><span class="fw-bold">${row.worker_name}</span><br><small>${row.worker_id}</small></td>
-                    <td>
-                        <select class="status-select ${getStatusClass(row.worker_attendance)}" 
-                                onchange="this.className='status-select '+getStatusClass(this.value)"
-                                id="adm-${uniqueKey}">
-                            <option value="1" ${row.worker_attendance == 1 ? 'selected' : ''}>Present</option>
-                            <option value="2" ${row.worker_attendance == 2 ? 'selected' : ''}>Absent</option>
-                            <option value="3" ${row.worker_attendance == 3 ? 'selected' : ''}>Half-Day</option>
-                            <option value="0" ${row.worker_attendance == 0 ? 'selected' : ''}>N/A</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="status-select ${getStatusClass(row.customer_side_attendance)}" 
-                                onchange="this.className='status-select '+getStatusClass(this.value)"
-                                id="cus-${uniqueKey}">
-                            <option value="0" ${row.customer_side_attendance == 0 ? 'selected' : ''}>N/A</option>
-                            <option value="1" ${row.customer_side_attendance == 1 ? 'selected' : ''}>Present</option>
-                            <option value="2" ${row.customer_side_attendance == 2 ? 'selected' : ''}>Absent</option>
-                            <option value="3" ${row.customer_side_attendance == 3 ? 'selected' : ''}>Half-Day</option>
-                        </select>
-                    </td>
-                    <td class="text-end pe-4">
-                        <button onclick="updateRow(${row.id}, '${uniqueKey}')" id="btn-${uniqueKey}" class="btn btn-sm btn-success px-3">Update</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
     }
 
-    async function updateRow(dbId, uniqueKey) {
-        const adminVal = document.getElementById(`adm-${uniqueKey}`).value;
-        const customerVal = document.getElementById(`cus-${uniqueKey}`).value;
-        const btn = document.getElementById(`btn-${uniqueKey}`);
-        btn.disabled = true;
-        btn.innerText = "...";
+    loadLogs();
+}
 
-        try {
-            const res = await fetch(`${API_ATTENDANCE}/admin/override`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    id: dbId,
-                    worker_attendance: parseInt(adminVal),
-                    customer_side_attendance: parseInt(customerVal)
-                })
-            });
-            const result = await res.json();
-            if(result.success) {
-                // IMPORTANT: After a successful update, we do NOT need to refresh 
-                // the whole table if you want to avoid visual jumps. 
-                // The values are already saved in the DB.
-                alert("Data saved successfully!");
-            } else {
-                alert("Server error: " + result.message);
-            }
-        } catch (e) {
-            alert("Failed to update.");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Update";
+async function loadLogs() {
+    const res  = await fetch(API_ATTENDANCE);
+    const json = await res.json();
+    const tbody = document.getElementById('logs');
+
+    if (!json.data?.length) {
+        tbody.innerHTML =
+            `<tr><td colspan="6" class="empty-msg">No attendance found</td></tr>`;
+        return;
+    }
+
+    // 🔹 auto-fill oldest date ONLY ONCE
+    if (!autoDateSet && currentFilter.workerId) {
+        const rows = json.data.filter(
+            r => r.worker_id.toString() === currentFilter.workerId
+        );
+
+        if (rows.length) {
+            const oldest = rows.map(r => r.actual_date).sort()[0];
+            currentFilter.start = sessionStorage.getItem('attendance_start') || oldest;
+            currentFilter.end   = sessionStorage.getItem('attendance_end') || '';
+
+            document.getElementById('startDate').value = currentFilter.start;
+            document.getElementById('endDate').value   = currentFilter.end;
+
+            autoDateSet = true;
         }
     }
 
-    function getQueryParam(param) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(param);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const prefilledId = getQueryParam('worker_id');
-        if (prefilledId) {
-            document.getElementById('filterWorkerId').value = prefilledId;
-        }
+    const filtered = json.data.filter(r => {
+        if (r.worker_id.toString() !== currentFilter.workerId) return false;
+        if (currentFilter.start && currentFilter.end)
+            return r.actual_date >= currentFilter.start &&
+                   r.actual_date <= currentFilter.end;
+        return true;
     });
+
+    if (!filtered.length) {
+        tbody.innerHTML =
+            `<tr><td colspan="6" class="empty-msg">No records found</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(r => {
+        const key = r.id + "_" + r.actual_date.replace(/-/g,'');
+        return `
+        <tr>
+            <td class="ps-4 small">${r.id}</td>
+            <td><strong>${r.actual_date}</strong></td>
+            <td>${r.worker_name}<br><small>${r.worker_id}</small></td>
+            <td>
+                <select class="status-select ${getStatusClass(r.worker_attendance)}">
+                    <option value="1" ${r.worker_attendance==1?'selected':''}>Present</option>
+                    <option value="2" ${r.worker_attendance==2?'selected':''}>Absent</option>
+                    <option value="3" ${r.worker_attendance==3?'selected':''}>Half</option>
+                    <option value="0" ${r.worker_attendance==0?'selected':''}>N/A</option>
+                </select>
+            </td>
+            <td>
+                <select class="status-select ${getStatusClass(r.customer_side_attendance)}">
+                    <option value="0" ${r.customer_side_attendance==0?'selected':''}>N/A</option>
+                    <option value="1" ${r.customer_side_attendance==1?'selected':''}>Present</option>
+                    <option value="2" ${r.customer_side_attendance==2?'selected':''}>Absent</option>
+                    <option value="3" ${r.customer_side_attendance==3?'selected':''}>Half</option>
+                </select>
+            </td>
+            <td class="text-end pe-4">
+                <button class="btn btn-sm btn-success">Update</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+/* ---------- init ---------- */
+
+window.addEventListener('DOMContentLoaded', () => {
+    const workerId = getQueryParam('worker_id');
+    if (workerId) {
+        document.getElementById('filterWorkerId').value = workerId;
+        currentFilter.workerId = workerId.trim();
+        loadLogs();
+    }
+});
 </script>
+
 </body>
 </html>

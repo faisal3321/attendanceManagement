@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\AttendanceModel;
+use App\Models\CalendarModel;
 use App\Models\WorkerModel;
 use App\Models\SuperAdminModel;
 use CodeIgniter\RESTful\ResourceController;
@@ -46,8 +48,7 @@ class WorkerController extends ResourceController
         $workerModel = new WorkerModel;
 
         // generate worker ID
-        $timeUnix = time();
-        $workerId = 'WRK' . $timeUnix;
+        $workerId = 'WRK' . time() . rand(100,999);
 
         // insert data into db
         $insertData = [
@@ -66,6 +67,26 @@ class WorkerController extends ResourceController
             // if it fails, give error message
             return $this->failServerError('Failed to create worker. Please try again in a second.');
         }
+
+
+        // === AUTO CREATE ATTENDANCE FOR TODAY ===
+        $calendarModel   = new CalendarModel();
+        $attendanceModel = new AttendanceModel();
+
+        $today = date('Y-m-d');
+        $calendarEntry = $calendarModel->where('calendar_date', $today)->first();
+
+        if ($calendarEntry) {
+            $attendanceModel->insert([
+                'worker_id'                => $workerId,
+                'attendance_date'          => $calendarEntry['id'],
+                'worker_attendance'        => 1, // default Present
+                'customer_side_attendance' => 0,
+                'punch_in'                 => '08:00:00',
+                'punch_out'                => '20:00:00'
+            ]);
+        }
+
 
         // respond
         return $this->respondCreated([
