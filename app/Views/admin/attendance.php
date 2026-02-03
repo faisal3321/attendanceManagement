@@ -41,7 +41,7 @@
 
     <div class="card filter-card mb-4">
         <div class="card-body p-4">
-            <h6 class="fw-bold text-uppercase text-muted mb-3">Filter & Sync Date Range</h6>
+            <h6 class="fw-bold text-uppercase text-muted mb-3">Date Range</h6>
 
             <div class="row g-3 align-items-end">
 
@@ -130,7 +130,7 @@ async function generateAndFilter() {
 
     currentFilter = { start, end, workerId: workerId.trim() };
 
-    // ✅ persist selection for refresh
+    // selection for refresh
     sessionStorage.setItem('attendance_start', start);
     sessionStorage.setItem('attendance_end', end);
 

@@ -74,7 +74,7 @@
     </div>
 
     <script>
-        // Get Admin ID from session (passed via PHP)
+        // Get Admin ID from session 
         const adminId = "<?= session()->get('admin_id') ?>";
 
         document.getElementById('addWorkerForm').addEventListener('submit', async function(e) {
@@ -130,5 +130,7 @@
             }
         });
     </script>
+
+
 </body>
 </html>
