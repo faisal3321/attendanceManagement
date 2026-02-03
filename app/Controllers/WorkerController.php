@@ -69,7 +69,7 @@ class WorkerController extends ResourceController
         }
 
 
-        // === AUTO CREATE ATTENDANCE FOR TODAY ===
+        // create attendance for today automatically
         $calendarModel   = new CalendarModel();
         $attendanceModel = new AttendanceModel();
 

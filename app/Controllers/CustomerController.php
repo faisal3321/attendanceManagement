@@ -33,7 +33,7 @@ class CustomerController extends ResourceController
         }
 
         // customer id generation
-        $timePart = time();
+        $timePart = time() . rand(100, 999);
         $data['customer_id'] = 'CUST' . $timePart;
 
         // hashing password
