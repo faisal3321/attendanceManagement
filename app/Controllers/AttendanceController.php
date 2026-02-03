@@ -88,10 +88,11 @@ class AttendanceController extends ResourceController
         $attendanceModel = new AttendanceModel();
         $data = $attendanceModel->select('attendance.*, workers.name as worker_name, calendar.calendar_date as actual_date')
                                 ->join('workers', 'workers.worker_id = attendance.worker_id')
-                                ->join('calendar', 'calendar.id = attendance.attendance_date')
+                                ->join('calendar', 'calendar.date = attendance.attendance_date')
                                 ->orderBy('calendar.calendar_date', 'DESC')
                                 ->findAll();
-
+        echo (string)$attendanceModel->db->getLastQuery();
+        die();
         return $this->respond(['status' => 200, 'success' => true, 'data' => $data]);
     }
 }
