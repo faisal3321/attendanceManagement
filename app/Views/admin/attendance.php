@@ -104,21 +104,21 @@ const API_CALENDAR   = "<?= base_url('api/calendar/generate') ?>";
 let currentFilter = { start:'', end:'', workerId:'' };
 let autoDateSet = false;
 
-/* ---------- helpers ---------- */
 
 function getStatusClass(v) {
     v = parseInt(v);
+    if (v === 0) return 'select-na';
     if (v === 1) return 'select-present';
     if (v === 2) return 'select-absent';
     if (v === 3) return 'select-half';
-    return 'select-na';
+    
 }
 
 function getQueryParam(p) {
     return new URLSearchParams(window.location.search).get(p);
 }
 
-/* ---------- main logic ---------- */
+// main logic is here
 
 async function generateAndFilter() {
     const start    = document.getElementById('startDate').value;
@@ -224,7 +224,6 @@ async function loadLogs() {
     }).join('');
 }
 
-/* ---------- init ---------- */
 
 window.addEventListener('DOMContentLoaded', () => {
     const workerId = getQueryParam('worker_id');

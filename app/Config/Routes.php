@@ -60,7 +60,7 @@ $routes->get('customer/login', 'Home::login');
 $routes->get('customer/bookWorker', 'Home::booking');
 $routes->get('customer/dashboard', 'Home::dashboard');
 $routes->get('customer/attendance', 'Home::attendanceCust');
-$routes->get('api/workers', 'WorkerController::index');
+// $routes->get('api/workers', 'WorkerController::index');
 $routes->get('api/attendance/customer/(:any)', 'AttendanceController::showByCustomer/$1');
 
 // ADMIN
