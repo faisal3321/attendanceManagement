@@ -19,7 +19,7 @@ class Calendar extends Migration
                 'type'              => 'VARCHAR',
                 'constraint'        => 20,
                 'unique'            => true,
-                'comment'           => 'Format: CAL-YYYYMMDD'
+                'comment'           => 'Format: CALYYYYMMDD'
             ],
             'calendar_date'  => [
                 'type'              => 'DATE',

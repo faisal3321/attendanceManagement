@@ -74,7 +74,7 @@ class WorkerController extends ResourceController
         $attendanceModel = new AttendanceModel();
 
         $today = date('Y-m-d');
-        $calendarEntry = $calendarModel->where('calendar_date', $today)->first();
+        $calendarEntry = $calendarModel->where('calendar.calendar_date', $today)->first();
 
         if ($calendarEntry) {
             $attendanceModel->insert([

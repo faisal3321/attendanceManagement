@@ -44,37 +44,30 @@ class CalendarController extends BaseController
         $last    = strtotime($endDate);
         $count   = 0;
 
+        // Inside CalendarController.php -> generateRange() loop:
+
         while ($current <= $last) {
             $dateStr = date('Y-m-d', $current);
-            
-            // Check if date already exists
             $exists = $model->where('calendar_date', $dateStr)->first();
 
             if (!$exists) {
                 $dayName = date('l', $current);
-                $isWeekend = ($dayName === 'Sunday') ? 1 : 0;
-
                 $newData = [
                     'calendar_id'   => 'CAL' . date('Ymd', $current),
                     'calendar_date' => $dateStr,
                     'day'           => $dayName,
                     'month'         => date('F', $current),
                     'year'          => date('Y', $current),
-                    'is_weekend'    => $isWeekend,
+                    'is_weekend'    => ($dayName === 'Sunday') ? 1 : 0,
                 ];
-
                 $model->insert($newData);
                 $count++;
 
-                // Conditional Sync Logic
-                // Only sync attendance if the date is Today or in the Future
-                if ($dateStr >= $today) {
-                    $att = new AttendanceController();
-                    $att->syncDailyAttendance();
-                }
+                // FIX PROBLEM 2: Pass the specific $dateStr to the sync function
+                // This creates attendance records for EVERY day generated
+                $att = new AttendanceController();
+                $att->syncDailyAttendance($dateStr); 
             }
-            
-            // Move to next day
             $current = strtotime('+1 day', $current);
         }
 

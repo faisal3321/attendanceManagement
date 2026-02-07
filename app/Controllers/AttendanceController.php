@@ -11,88 +11,65 @@ class AttendanceController extends ResourceController
 {
     protected $format = 'json';
 
-    public function syncDailyAttendance()
+    /**
+     * FIX PROBLEM 2: Optimized to handle any date passed to it.
+     * This allows the system to sync past, present, or future dates.
+     */
+    public function syncDailyAttendance($specificDate = null)
     {
         $attendanceModel = new AttendanceModel();
         $workerModel     = new WorkerModel();
         $calendarModel   = new CalendarModel();
 
-        $today = date('Y-m-d');
-        $calendarEntry = $calendarModel->where('calendar_date', $today)->first();
+        $workers = $workerModel->where('status', 'active')->findAll();
+        
+        // If a specific date is passed, just sync that one
+        // If NOT, we sync for all dates in the calendar table (Full Repair)
+        $datesToSync = $specificDate 
+            ? [['calendar_date' => $specificDate]] 
+            : $calendarModel->findAll();
 
-        if (!$calendarEntry) {
-            return $this->fail("Please add today's date ($today) to your Calendar table first.");
-        }
-
-        $calendarId = $calendarEntry['id']; 
-        $workers = $workerModel->findAll();
         $syncCount = 0;
+        foreach ($datesToSync as $dateEntry) {
+            $date = $dateEntry['calendar_date'];
+            
+            foreach ($workers as $worker) {
+                $exists = $attendanceModel->where([
+                    'worker_id'       => $worker['worker_id'],
+                    'attendance_date' => $date 
+                ])->first();
 
-        foreach ($workers as $worker) {
-            $exists = $attendanceModel->where([
-                'worker_id'       => $worker['worker_id'],
-                'attendance_date' => $calendarId 
-            ])->first();
-
-            if (!$exists) {
-                $attendanceModel->insert([
-                    'worker_id'                => $worker['worker_id'],
-                    'attendance_date'          => $calendarId, 
-                    'worker_attendance'        => 1, 
-                    'customer_side_attendance' => 0, 
-                    'punch_in'                 => '08:00:00',
-                    'punch_out'                => '20:00:00'
-                ]);
-                $syncCount++;
+                if (!$exists) {
+                    $attendanceModel->insert([
+                        'worker_id'         => $worker['worker_id'],
+                        'attendance_date'   => $date,
+                        'worker_attendance' => 1, 
+                        'punch_in'          => '08:00:00',
+                        'punch_out'         => '20:00:00'
+                    ]);
+                    $syncCount++;
+                }
             }
         }
 
         return $this->respond([
             'status'  => 200,
-            'success' => true,
-            'message' => "Synced $syncCount workers for Calendar ID: $calendarId ($today)."
+            'message' => "Synced $syncCount missing records."
         ]);
-    }
-
-    public function adminOverride()
-    {
-        $attendanceModel = new AttendanceModel();
-        $data = $this->request->getJSON(true);
-
-        if (empty($data['id'])) {
-            return $this->failValidationError("Attendance ID is required.");
-        }
-
-        // Logic fix: Ensure we take the values from request directly to update DB
-        $updateData = [
-            'worker_attendance'        => (int)$data['worker_attendance'],
-            'customer_side_attendance' => (int)$data['customer_side_attendance']
-        ];
-
-        // Keep existing times if not provided in the update request
-        if (isset($data['punch_in'])) $updateData['punch_in'] = $data['punch_in'];
-        if (isset($data['punch_out'])) $updateData['punch_out'] = $data['punch_out'];
-
-        if ($attendanceModel->update($data['id'], $updateData)) {
-            return $this->respond([
-                'status'  => 200, 
-                'success' => true, 
-                'message' => "Record successfully updated in database."
-            ]);
-        }
-        return $this->failServerError("Failed to update database.");
     }
 
     public function index()
     {
         $attendanceModel = new AttendanceModel();
+        
+        // FIX PROBLEM 3: Joining on the DATE string now that both tables 
+        // use 'YYYY-MM-DD' format
         $data = $attendanceModel->select('attendance.*, workers.name as worker_name, calendar.calendar_date as actual_date')
-                                ->join('workers', 'workers.worker_id = attendance.worker_id')
-                                ->join('calendar', 'calendar.date = attendance.attendance_date')
-                                ->orderBy('calendar.calendar_date', 'DESC')
-                                ->findAll();
-        echo (string)$attendanceModel->db->getLastQuery();
-        die();
+            ->join('workers', 'workers.worker_id = attendance.worker_id')
+            ->join('calendar', 'calendar.calendar_date = attendance.attendance_date')
+            ->orderBy('calendar.calendar_date', 'DESC')
+            ->findAll();
+
         return $this->respond(['status' => 200, 'success' => true, 'data' => $data]);
     }
 }
