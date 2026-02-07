@@ -71,31 +71,41 @@ async function initDates() {
             const dates = json.data.map(r => r.actual_date).sort();
             oldestCalendarDate = dates[0];
             
-            // Set date inputs
-            document.getElementById('endDate').value = today;
+            // Load saved dates from session storage
+            const savedStart = sessionStorage.getItem('attendance_start');
+            const savedEnd = sessionStorage.getItem('attendance_end');
+            
+            // Set date inputs - use saved dates if available, otherwise use defaults
+            const endDate = savedEnd && savedEnd <= today ? savedEnd : today;
+            const startDate = savedStart && savedStart >= oldestCalendarDate ? savedStart : oldestCalendarDate;
+            
+            document.getElementById('endDate').value = endDate;
             document.getElementById('endDate').min = oldestCalendarDate;
             document.getElementById('endDate').max = today;
             
-            document.getElementById('startDate').value = oldestCalendarDate;
+            document.getElementById('startDate').value = startDate;
             document.getElementById('startDate').min = oldestCalendarDate;
             document.getElementById('startDate').max = today;
             
-            // Set current filter
-            currentFilter.start = oldestCalendarDate;
-            currentFilter.end = today;
-            
-            // Save to session storage
-            sessionStorage.setItem('attendance_start', oldestCalendarDate);
-            sessionStorage.setItem('attendance_end', today);
+            // Set current filter with saved dates
+            currentFilter.start = startDate;
+            currentFilter.end = endDate;
         }
     } catch (error) {
         // Fallback to defaults
-        document.getElementById('endDate').value = today;
+        const savedStart = sessionStorage.getItem('attendance_start');
+        const savedEnd = sessionStorage.getItem('attendance_end');
+        
+        const endDate = savedEnd || today;
+        const startDate = savedStart || today;
+        
+        document.getElementById('endDate').value = endDate;
         document.getElementById('endDate').max = today;
-        document.getElementById('startDate').value = today;
+        document.getElementById('startDate').value = startDate;
         document.getElementById('startDate').max = today;
-        currentFilter.start = today;
-        currentFilter.end = today;
+        
+        currentFilter.start = startDate;
+        currentFilter.end = endDate;
     }
 }
 
@@ -150,7 +160,8 @@ async function generateAndFilter() {
                 body: JSON.stringify({ start_date: start, end_date: end })
             });
         } catch (error) {
-            alert('Failed to generate calendar');
+            // Don't alert for calendar generation errors on page load
+            console.log('Calendar generation optional');
         }
     }
 
@@ -177,7 +188,7 @@ async function loadLogs() {
         });
 
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="6" class="empty-msg">No records found</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="empty-msg">No records found for selected date range</td></tr>`;
             return;
         }
 
@@ -271,6 +282,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (workerId) {
         document.getElementById('filterWorkerId').value = workerId;
         currentFilter.workerId = workerId.trim();
+        
+        // Load logs with saved date range automatically
         loadLogs();
     }
     
