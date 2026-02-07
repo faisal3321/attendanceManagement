@@ -79,8 +79,8 @@ class WorkerController extends ResourceController
         if ($calendarEntry) {
             $attendanceModel->insert([
                 'worker_id'                => $workerId,
-                'attendance_date'          => $calendarEntry['id'],
-                'worker_attendance'        => 1, // default Present
+                'attendance_date'          => $calendarEntry['calendar_date'],
+                'worker_attendance'        => 1, 
                 'customer_side_attendance' => 0,
                 'punch_in'                 => '08:00:00',
                 'punch_out'                => '20:00:00'

@@ -38,6 +38,14 @@ class CalendarController extends BaseController
 
         $model = new CalendarModel();
         $today = date('Y-m-d');
+
+        if ($endDate > $today) {
+            return $this->failValidationError('Future dates are not allowed.');
+        }
+
+        if ($startDate > $endDate) {
+            return $this->failValidationError('Start date cannot be after end date.');
+        }
         
         // The Generation Loop
         $current = strtotime($startDate);
