@@ -15,12 +15,12 @@ class Calendar extends Migration
                 'unsigned'          => true,
                 'auto_increment'    => true
             ],
-            'calendar_id'    => [
-                'type'              => 'VARCHAR',
-                'constraint'        => 20,
-                'unique'            => true,
-                'comment'           => 'Format: CALYYYYMMDD'
-            ],
+            // 'calendar_id'    => [
+            //     'type'              => 'VARCHAR',
+            //     'constraint'        => 20,
+            //     'unique'            => true,
+            //     'comment'           => 'Format: CALYYYYMMDD'
+            // ],
             'calendar_date'  => [
                 'type'              => 'DATE',
             ],

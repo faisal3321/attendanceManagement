@@ -3,119 +3,108 @@
 namespace App\Controllers;
 
 use App\Models\CalendarModel;
-use App\Models\SuperAdminModel; // Added this
+use App\Models\SuperAdminModel;
+use App\Services\AttendanceSyncService;
+use CodeIgniter\API\ResponseTrait;
 use App\Controllers\BaseController;
-use App\Controllers\AttendanceController;
-use CodeIgniter\API\ResponseTrait; // Added this
 
 class CalendarController extends BaseController
 {
-    // Now the trait will be found correctly
     use ResponseTrait;
 
     public function generateRange()
     {
-        // Authentication Check
+        // Admin authentication
         $adminId = $this->request->getHeaderLine('X-ADMIN-ID');
-        if (!$adminId) {
+        
+        if (! $adminId) {
             return $this->failUnauthorized('Admin ID is required');
         }
-
+        
         $adminModel = new SuperAdminModel();
-        if (!$adminModel->find($adminId)) {
+        if (! $adminModel->find($adminId)) {
             return $this->failUnauthorized('Invalid Admin Access');
         }
-
-        // Get Input Data
+        
         $data = $this->request->getJSON(true);
-
-        $startDate = $data['start_date'] ?? null; // format: YYYY-MM-DD
-        $endDate   = $data['end_date'] ?? null;   // format: YYYY-MM-DD
-
-        if (!$startDate || !$endDate) {
-            return $this->failValidationError('Start and End dates are required');
-        }
-
-        $model = new CalendarModel();
-        $today = date('Y-m-d');
-
-        if ($endDate > $today) {
-            return $this->failValidationError('Future dates are not allowed.');
-        }
-
-        if ($startDate > $endDate) {
-            return $this->failValidationError('Start date cannot be after end date.');
+        
+        $startDate = $data['start_date'] ?? null;
+        $endDate   = $data['end_date'] ?? null;
+        
+        if (! $startDate || ! $endDate) {
+            return $this->fail('Start and End dates are required', 400);
         }
         
-        // The Generation Loop
+        if ($startDate > $endDate) {
+            return $this->fail('Start date cannot be after end date', 400);
+        }
+        
+        $calendarModel = new CalendarModel();
+        $attendanceService = new AttendanceSyncService();
+        
         $current = strtotime($startDate);
         $last    = strtotime($endDate);
         $count   = 0;
-
-        // Inside CalendarController.php -> generateRange() loop:
-
+        
         while ($current <= $last) {
             $dateStr = date('Y-m-d', $current);
-            $exists = $model->where('calendar_date', $dateStr)->first();
-
-            if (!$exists) {
+            
+            $exists = $calendarModel
+                ->where('calendar_date', $dateStr)
+                ->first();
+                
+            if (! $exists) {
                 $dayName = date('l', $current);
-                $newData = [
-                    'calendar_id'   => 'CAL' . date('Ymd', $current),
+                
+                $calendarModel->insert([
                     'calendar_date' => $dateStr,
                     'day'           => $dayName,
                     'month'         => date('F', $current),
                     'year'          => date('Y', $current),
                     'is_weekend'    => ($dayName === 'Sunday') ? 1 : 0,
-                ];
-                $model->insert($newData);
+                ]);
+                
+                // Sync attendance for this specific date
+                $attendanceService->syncDailyAttendance($dateStr);
                 $count++;
-
-                // FIX PROBLEM 2: Pass the specific $dateStr to the sync function
-                // This creates attendance records for EVERY day generated
-                $att = new AttendanceController();
-                $att->syncDailyAttendance($dateStr); 
             }
+            
             $current = strtotime('+1 day', $current);
         }
-
+        
         return $this->respond([
             'status'  => 200,
             'success' => true,
-            'message' => "Successfully generated $count new days. Future dates were synced with attendance.",
+            'message' => "Successfully generated $count calendar days and synced attendance."
         ]);
     }
 
     public function index()
     {
         $model = new CalendarModel();
-
-        $todayDate = date('Y-m-d');
-        $currentDayName = date('l');
-
-        // check if today date already exist in calendar
-        $todayDateExists = $model->where('calendar_date', $todayDate)->first();
-
-        if (! $todayDateExists) {
-            $isWeekend = ($currentDayName === 'Sunday') ? 1 : 0;
-
-            $newData = [
-                'calendar_id'   => 'CAL' . date('Ymd'),
-                'calendar_date' => $todayDate,
-                'day'           => $currentDayName,
+        $today = date('Y-m-d');
+        
+        // Ensure today exists
+        if (! $model->where('calendar_date', $today)->first()) {
+            
+            $dayName = date('l');
+            
+            $model->insert([
+                'calendar_date' => $today,
+                'day'           => $dayName,
                 'month'         => date('F'),
                 'year'          => date('Y'),
-                'is_weekend'    => $isWeekend,
-            ];
-
-            $model->insert($newData);
-
-            $att = new AttendanceController();
-            $att->syncDailyAttendance();
+                'is_weekend'    => ($dayName === 'Sunday') ? 1 : 0,
+            ]);
+            
+            $attendanceService = new AttendanceSyncService();
+            $attendanceService->syncDailyAttendance($today);
         }
-
-        $allData = $model->orderBy('calendar_date', 'DESC')->findAll();
-
-        return $this->response->setJSON($allData);
+        
+        return $this->respond([
+            'status' => 200,
+            'success' => true,
+            'data' => $model->orderBy('calendar_date', 'DESC')->findAll()
+        ]);
     }
 }

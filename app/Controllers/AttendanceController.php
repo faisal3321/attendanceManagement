@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\AttendanceModel;
 use App\Models\CalendarModel;
 use App\Models\WorkerModel;
+use App\Services\AttendanceSyncService;
 use CodeIgniter\RESTful\ResourceController;
 
 class AttendanceController extends ResourceController
@@ -18,57 +19,17 @@ class AttendanceController extends ResourceController
      */
     public function syncDailyAttendance($specificDate = null)
     {
-        $attendanceModel = new AttendanceModel();
-        $workerModel     = new WorkerModel();
-        $calendarModel   = new CalendarModel();
-
-        $today = date('Y-m-d');
-
-        // Prevent syncing future dates
-        if ($specificDate && $specificDate > $today) {
-            return $this->failValidationError('Cannot sync future dates.');
+        $attendanceService = new AttendanceSyncService();
+        $result = $attendanceService->syncDailyAttendance($specificDate);
+        
+        if (!$result['success']) {
+            return $this->fail($result['message'], 400);
         }
-
-        // Only active workers
-        $workers = $workerModel->where('status', 'active')->findAll();
-
-        // Decide which dates to sync
-        $datesToSync = $specificDate
-            ? [['calendar_date' => $specificDate]]
-            : $calendarModel
-                ->where('calendar_date <=', $today)
-                ->findAll();
-
-        $syncCount = 0;
-
-        foreach ($datesToSync as $dateEntry) {
-            $date = $dateEntry['calendar_date'];
-
-            foreach ($workers as $worker) {
-
-                $exists = $attendanceModel->where([
-                    'worker_id'       => $worker['worker_id'], // adjust if your PK is `id`
-                    'attendance_date' => $date,
-                ])->first();
-
-                if (!$exists) {
-                    $attendanceModel->insert([
-                        'worker_id'                => $worker['worker_id'],
-                        'attendance_date'          => $date,
-                        'worker_attendance'        => 1,
-                        'customer_side_attendance' => 0,
-                        'punch_in'                 => '08:00:00',
-                        'punch_out'                => '20:00:00'
-                    ]);
-                    $syncCount++;
-                }
-            }
-        }
-
+        
         return $this->respond([
             'status'  => 200,
             'success' => true,
-            'message' => "Synced $syncCount missing records."
+            'message' => $result['message']
         ]);
     }
 
@@ -81,7 +42,7 @@ class AttendanceController extends ResourceController
         $data = $this->request->getJSON(true);
 
         if (empty($data['id'])) {
-            return $this->failValidationError('Attendance ID is required.');
+            return $this->fail('Attendance ID is required', 400);
         }
 
         $updateData = [

@@ -12,7 +12,6 @@ class CalendarModel extends Model
     protected $returnType       = 'array';
 
     protected $allowedFields    = [
-        'calendar_id', 
         'calendar_date', 
         'day', 
         'month', 

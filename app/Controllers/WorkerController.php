@@ -2,8 +2,6 @@
 
 namespace App\Controllers;
 
-use App\Models\AttendanceModel;
-use App\Models\CalendarModel;
 use App\Models\WorkerModel;
 use App\Models\SuperAdminModel;
 use CodeIgniter\RESTful\ResourceController;
@@ -12,9 +10,9 @@ class WorkerController extends ResourceController
 {
     protected $format = 'json';
 
-    public function create()  
+    public function create()
     {
-        // authentication check we will change it to token 
+        // Admin authentication
         $adminId = $this->request->getHeaderLine('X-ADMIN-ID');
 
         if (! $adminId) {
@@ -22,35 +20,26 @@ class WorkerController extends ResourceController
         }
 
         $adminModel = new SuperAdminModel();
-        $admin = $adminModel->find($adminId);
-
-        if (! $admin) {
+        if (! $adminModel->find($adminId)) {
             return $this->failUnauthorized('Invalid Admin');
         }
 
-        // get JSON request data
+        // Request data
         $data = $this->request->getJSON(true) ?? [];
 
-        $requiredField = [
-            'name', 
-            'age', 
-            'gender', 
-            'phone'
-        ];
-
-        // validation that the field should not be empty
-        foreach ($requiredField as $field) {
+        $required = ['name', 'age', 'gender', 'phone'];
+        foreach ($required as $field) {
             if (empty($data[$field])) {
                 return $this->failValidationError("$field is required");
             }
         }
 
-        $workerModel = new WorkerModel;
+        $workerModel = new WorkerModel();
 
-        // generate worker ID
-        $workerId = 'WRK' . time() . rand(100,999);
+        // Generate worker ID
+        $workerId = 'WRK' . time() . rand(100, 999);
 
-        // insert data into db
+        // Insert worker
         $insertData = [
             'worker_id'  => $workerId,
             'name'       => $data['name'],
@@ -62,33 +51,18 @@ class WorkerController extends ResourceController
             'status'     => 'active',
         ];
 
-        // insert data
         if (! $workerModel->insert($insertData)) {
-            // if it fails, give error message
-            return $this->failServerError('Failed to create worker. Please try again in a second.');
+            return $this->failServerError('Failed to create worker.');
         }
 
+        /**
+         * ✅ IMPORTANT FIX
+         * Do NOT manually insert attendance.
+         * Always delegate to AttendanceController.
+         */
+        $attendanceController = new \App\Controllers\AttendanceController();
+        $attendanceController->syncDailyAttendance(date('Y-m-d'));
 
-        // create attendance for today automatically
-        $calendarModel   = new CalendarModel();
-        $attendanceModel = new AttendanceModel();
-
-        $today = date('Y-m-d');
-        $calendarEntry = $calendarModel->where('calendar.calendar_date', $today)->first();
-
-        if ($calendarEntry) {
-            $attendanceModel->insert([
-                'worker_id'                => $workerId,
-                'attendance_date'          => $calendarEntry['calendar_date'],
-                'worker_attendance'        => 1, 
-                'customer_side_attendance' => 0,
-                'punch_in'                 => '08:00:00',
-                'punch_out'                => '20:00:00'
-            ]);
-        }
-
-
-        // respond
         return $this->respondCreated([
             'status'  => 201,
             'success' => true,
@@ -99,27 +73,15 @@ class WorkerController extends ResourceController
         ]);
     }
 
-    // for fetching worker at the time of booking
+    // Fetch active workers (booking side)
     public function index()
     {
         $workerModel = new WorkerModel();
-        
-        // Get only active workers
         $workers = $workerModel->where('status', 'active')->findAll();
-
-        if (empty($workers)) {
-            return $this->respond([
-                'status'  => 200,
-                'success' => false,
-                'message' => 'No workers found',
-                'data'    => []
-            ]);
-        }
 
         return $this->respond([
             'status'  => 200,
             'success' => true,
-            'message' => 'Workers retrieved successfully',
             'data'    => $workers
         ]);
     }
@@ -128,9 +90,8 @@ class WorkerController extends ResourceController
     public function delete($id = null)
     {
         $model = new WorkerModel();
-        $worker = $model->find($id);
 
-        if (!$worker) {
+        if (! $model->find($id)) {
             return $this->failNotFound('Worker not found');
         }
 
@@ -141,22 +102,21 @@ class WorkerController extends ResourceController
                 'message' => 'Worker deleted successfully'
             ]);
         }
+
         return $this->failServerError('Could not delete worker');
     }
 
-    // Update worker details
+    // Update worker
     public function update($id = null)
     {
         $model = new WorkerModel();
-        $worker = $model->find($id);
 
-        if (!$worker) {
+        if (! $model->find($id)) {
             return $this->failNotFound('Worker not found');
         }
 
         $data = $this->request->getJSON(true);
-        
-        // Fields allowed to be updated
+
         $updateData = [
             'name'    => $data['name'],
             'age'     => (int) $data['age'],
@@ -171,7 +131,7 @@ class WorkerController extends ResourceController
                 'message' => 'Worker updated successfully'
             ]);
         }
+
         return $this->failServerError('Failed to update worker');
     }
-    
 }
