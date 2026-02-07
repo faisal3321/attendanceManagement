@@ -122,7 +122,7 @@ function getQueryParam(p) {
 
 async function generateAndFilter() {
     const start    = document.getElementById('startDate').value;
-    const end      = document.getElementById('endDate').value;
+    const end      = document.getElementById('endDate').value ;
     const workerId = document.getElementById('filterWorkerId').value;
     const adminId  = document.getElementById('adminId').value;
 

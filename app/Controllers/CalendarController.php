@@ -39,6 +39,24 @@ class CalendarController extends BaseController
             return $this->fail('Start date cannot be after end date', 400);
         }
         
+        // ADD THIS VALIDATION: Prevent future date generation
+        $today = date('Y-m-d');
+        if ($startDate > $today) {
+            return $this->fail('Cannot generate calendar for future start date', 400);
+        }
+        
+        // Prevent future dates
+        $today = date('Y-m-d');
+        if ($endDate > $today) {
+            return $this->fail('Cannot generate calendar for future dates', 400);
+        }
+        
+        // Prevent generating calendar older than 2 months 
+        $twoMonthsAgo = date('Y-m-d', strtotime('-2 months'));
+        if ($startDate < $twoMonthsAgo) {
+            return $this->fail('Cannot generate calendar older than 2 months', 400);
+        }
+        
         $calendarModel = new CalendarModel();
         $attendanceService = new AttendanceSyncService();
         
@@ -64,8 +82,10 @@ class CalendarController extends BaseController
                     'is_weekend'    => ($dayName === 'Sunday') ? 1 : 0,
                 ]);
                 
-                // Sync attendance for this specific date
-                $attendanceService->syncDailyAttendance($dateStr);
+                // Sync attendance only for past/current dates
+                if ($dateStr <= $today) {
+                    $attendanceService->syncDailyAttendance($dateStr);
+                }
                 $count++;
             }
             
@@ -75,7 +95,7 @@ class CalendarController extends BaseController
         return $this->respond([
             'status'  => 200,
             'success' => true,
-            'message' => "Successfully generated $count calendar days and synced attendance."
+            'message' => "Successfully generated $count calendar days."
         ]);
     }
 

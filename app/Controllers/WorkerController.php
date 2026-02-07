@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\WorkerModel;
 use App\Models\SuperAdminModel;
 use CodeIgniter\RESTful\ResourceController;
+use App\Services\AttendanceSyncService;
 
 class WorkerController extends ResourceController
 {
@@ -30,18 +31,14 @@ class WorkerController extends ResourceController
         $required = ['name', 'age', 'gender', 'phone'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
-                return $this->failValidationError("$field is required");
+                return $this->fail("$field is required", 400);
             }
         }
 
         $workerModel = new WorkerModel();
 
-        // Generate worker ID
-        $workerId = 'WRK' . time() . rand(100, 999);
-
-        // Insert worker
+        // Prepare data for insertion (NO worker_id - let MySQL auto-increment handle it)
         $insertData = [
-            'worker_id'  => $workerId,
             'name'       => $data['name'],
             'age'        => (int) $data['age'],
             'gender'     => $data['gender'],
@@ -51,26 +48,39 @@ class WorkerController extends ResourceController
             'status'     => 'active',
         ];
 
-        if (! $workerModel->insert($insertData)) {
-            return $this->failServerError('Failed to create worker.');
+        try {
+            // Insert worker - MySQL will generate the auto-increment ID
+            if (! $workerModel->insert($insertData)) {
+                return $this->failServerError('Failed to create worker.');
+            }
+
+            // Get the auto-generated ID
+            $insertedId = $workerModel->getInsertID();
+            
+            // Generate a worker_id based on the auto-increment ID (optional)
+            $workerId = 'WRK' . str_pad($insertedId, 6, '0', STR_PAD_LEFT);
+            
+            // Update with the formatted worker_id (optional)
+            $workerModel->update($insertedId, ['worker_id' => $workerId]);
+
+            // Sync attendance for today using service
+            $attendanceService = new AttendanceSyncService();
+            $attendanceService->syncDailyAttendance(date('Y-m-d'));
+
+            return $this->respondCreated([
+                'status'  => 201,
+                'success' => true,
+                'message' => 'Worker created successfully!',
+                'data'    => [
+                    'id'        => $insertedId,
+                    'worker_id' => $workerId, // Optional: return the formatted ID
+                    'name'      => $data['name']
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Failed to create worker: ' . $e->getMessage());
         }
-
-        /**
-         * ✅ IMPORTANT FIX
-         * Do NOT manually insert attendance.
-         * Always delegate to AttendanceController.
-         */
-        $attendanceController = new \App\Controllers\AttendanceController();
-        $attendanceController->syncDailyAttendance(date('Y-m-d'));
-
-        return $this->respondCreated([
-            'status'  => 201,
-            'success' => true,
-            'message' => 'Worker created successfully!',
-            'data'    => [
-                'worker_id' => $workerId
-            ]
-        ]);
     }
 
     // Fetch active workers (booking side)
@@ -116,13 +126,37 @@ class WorkerController extends ResourceController
         }
 
         $data = $this->request->getJSON(true);
+        
+        if (empty($data)) {
+            return $this->fail('No data provided for update', 400);
+        }
 
-        $updateData = [
-            'name'    => $data['name'],
-            'age'     => (int) $data['age'],
-            'phone'   => $data['phone'],
-            'address' => $data['address'] ?? null,
-        ];
+        $updateData = [];
+        
+        // Only update fields that are provided
+        if (isset($data['name'])) {
+            $updateData['name'] = $data['name'];
+        }
+        
+        if (isset($data['age'])) {
+            $updateData['age'] = (int) $data['age'];
+        }
+        
+        if (isset($data['phone'])) {
+            $updateData['phone'] = $data['phone'];
+        }
+        
+        if (isset($data['address'])) {
+            $updateData['address'] = $data['address'];
+        }
+        
+        if (isset($data['status'])) {
+            $updateData['status'] = $data['status'];
+        }
+
+        if (empty($updateData)) {
+            return $this->fail('No valid fields to update', 400);
+        }
 
         if ($model->update($id, $updateData)) {
             return $this->respond([
