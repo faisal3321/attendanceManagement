@@ -87,6 +87,7 @@ class AttendanceController extends ResourceController
         return $this->respond([
             'status'  => 200,
             'success' => true,
+            'message' => 'Here is the data you wanted',
             'data'    => $data
         ]);
     }
