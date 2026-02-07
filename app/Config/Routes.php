@@ -47,7 +47,7 @@ $routes->group('api', function($routes) {
     // MAIN ATTENDANCE API
     $routes->get('attendance', 'AttendanceController::index');
     $routes->post('attendance/sync', 'AttendanceController::syncDailyAttendance');
-    $routes->post('attendance/customer/update', 'AttendanceController::updateCustomerStatus');
+    // $routes->post('attendance/customer/update', 'AttendanceController::updateCustomerStatus');
     $routes->put('attendance/admin/override', 'AttendanceController::adminOverride');
 });
 
@@ -61,7 +61,7 @@ $routes->get('customer/bookWorker', 'Home::booking');
 $routes->get('customer/dashboard', 'Home::dashboard');
 $routes->get('customer/attendance', 'Home::attendanceCust');
 // $routes->get('api/workers', 'WorkerController::index');
-$routes->get('api/attendance/customer/(:any)', 'AttendanceController::showByCustomer/$1');
+// $routes->get('api/attendance/customer/(:any)', 'AttendanceController::showByCustomer/$1');
 
 // ADMIN
 $routes->get('admin/login', 'Home::adminLogin');
