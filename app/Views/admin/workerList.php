@@ -20,7 +20,7 @@
             background: #f0f2f5;
             padding: 4px 12px; 
             border-radius: 4px;
-            /* Ensures 13-digit ID stays in one line */
+            /* Ensures ID stays in one line */
             white-space: nowrap;
             display: inline-block;
             letter-spacing: 0.5px;
@@ -48,7 +48,6 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">ID</th>
-                        <th>Worker ID</th>
                         <th>Name</th>
                         <th>Age</th>
                         <th>Phone</th>
@@ -77,12 +76,12 @@
             tbody.innerHTML = '';
 
             if (result.success && result.data.length > 0) {
-                // This is the part we updated to fix the ID display
                 result.data.forEach(worker => {
                     tbody.innerHTML += `
                         <tr>
-                            <td class="ps-4 text-muted small">${worker.id}</td>
-                            <td><span class="worker-id-tag">${worker.worker_id}</span></td>
+                            <td class="ps-4">
+                                <span class="worker-id-tag">${worker.id}</span>
+                            </td>
                             <td class="fw-bold">${worker.name}</td>
                             <td>${worker.age} Yrs</td>
                             <td>${worker.phone}</td>
@@ -90,7 +89,7 @@
                                 ${worker.address || 'N/A'}
                             </td>
                             <td class="text-end pe-4">
-                                <a href="<?= base_url('admin/attendance') ?>?worker_id=${worker.worker_id}" class="btn btn-primary btn-manage me-2">
+                                <a href="<?= base_url('admin/attendance') ?>?worker_id=${worker.id}" class="btn btn-primary btn-manage me-2">
                                     Manage Attendance
                                 </a>
                                 <a href="<?= base_url('admin/workers/edit/') ?>${worker.id}" class="text-warning me-3" title="Edit">
@@ -104,7 +103,7 @@
                     `;
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted">No workers found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted">No workers found.</td></tr>';
             }
         } catch (error) {
             console.error("Error fetching workers:", error);
@@ -114,7 +113,7 @@
     async function deleteWorker(id) {
         if (confirm('Are you sure you want to delete this worker? This action cannot be undone.')) {
             try {
-                const response = await fetch(`<?= base_url('api/workers/delete/') ?>${id}`, {
+                const response = await fetch(`<?= base_url('api/workers/') ?>${id}`, {
                     method: 'DELETE',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 });
@@ -134,9 +133,7 @@
     }
 
     fetchWorkers();
-    
 </script>
-
 
 </body>
 </html>

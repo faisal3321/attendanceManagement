@@ -56,13 +56,13 @@ class AttendanceSyncService
             
             foreach ($workers as $worker) {
                 $exists = $this->attendanceModel->where([
-                    'worker_id'       => $worker['worker_id'],
+                    'worker_id'       => $worker['id'], 
                     'attendance_date' => $date,
                 ])->first();
                 
                 if (!$exists) {
                     $this->attendanceModel->insert([
-                        'worker_id'                => $worker['worker_id'],
+                        'worker_id'                => $worker['id'],
                         'attendance_date'          => $date,
                         'worker_attendance'        => 1,
                         'customer_side_attendance' => 0,

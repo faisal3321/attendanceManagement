@@ -37,7 +37,7 @@ class WorkerController extends ResourceController
 
         $workerModel = new WorkerModel();
 
-        // Prepare data for insertion (NO worker_id - let MySQL auto-increment handle it)
+        // Prepare data for insertion
         $insertData = [
             'name'       => $data['name'],
             'age'        => (int) $data['age'],
@@ -54,14 +54,8 @@ class WorkerController extends ResourceController
                 return $this->failServerError('Failed to create worker.');
             }
 
-            // Get the auto-generated ID
-            $insertedId = $workerModel->getInsertID();
-            
-            // Generate a worker_id based on the auto-increment ID (optional)
-            $workerId = 'WRK' . str_pad($insertedId, 6, '0', STR_PAD_LEFT);
-            
-            // Update with the formatted worker_id (optional)
-            $workerModel->update($insertedId, ['worker_id' => $workerId]);
+            // Get the auto-generated ID (this is the worker's ID now)
+            $workerId = $workerModel->getInsertID();
 
             // Sync attendance for today using service
             $attendanceService = new AttendanceSyncService();
@@ -72,9 +66,8 @@ class WorkerController extends ResourceController
                 'success' => true,
                 'message' => 'Worker created successfully!',
                 'data'    => [
-                    'id'        => $insertedId,
-                    'worker_id' => $workerId, // Optional: return the formatted ID
-                    'name'      => $data['name']
+                    'id'   => $workerId,
+                    'name' => $data['name']
                 ]
             ]);
 

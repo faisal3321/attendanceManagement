@@ -79,7 +79,7 @@ class AttendanceController extends ResourceController
 
         $data = $attendanceModel
             ->select('attendance.*, workers.name as worker_name, calendar.calendar_date as actual_date')
-            ->join('workers', 'workers.worker_id = attendance.worker_id')
+            ->join('workers', 'workers.id = attendance.worker_id') 
             ->join('calendar', 'calendar.calendar_date = attendance.attendance_date')
             ->orderBy('calendar.calendar_date', 'DESC')
             ->findAll();

@@ -12,7 +12,6 @@ class WorkerModel extends Model
     protected $returnType       = 'array';
 
     protected $allowedFields    = [
-        'worker_id',
         'name',
         'age',
         'gender',

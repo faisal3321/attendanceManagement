@@ -112,7 +112,7 @@
 
                 if (result.success) {
                     alertMsg.className = "alert alert-success";
-                    alertMsg.textContent = result.message + " Worker ID: " + result.data.worker_id;
+                    alertMsg.textContent = result.message + " Worker ID: " + result.data.id;
                     alertMsg.classList.remove('d-none');
                     document.getElementById('addWorkerForm').reset();
                 } else {

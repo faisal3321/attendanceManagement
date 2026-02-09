@@ -49,6 +49,10 @@ $routes->group('api', function($routes) {
     $routes->post('attendance/sync', 'AttendanceController::syncDailyAttendance');
     // $routes->post('attendance/customer/update', 'AttendanceController::updateCustomerStatus');
     $routes->put('attendance/admin/override', 'AttendanceController::adminOverride');
+
+
+    // For one-time sync of existing workers
+    $routes->post('attendance/sync-existing', 'AttendanceController::syncExistingWorkers');
 });
 
 

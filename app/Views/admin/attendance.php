@@ -77,15 +77,14 @@ async function initDates() {
             
             // Set date inputs - use saved dates if available, otherwise use defaults
             const endDate = savedEnd && savedEnd <= today ? savedEnd : today;
-            const startDate = savedStart && savedStart >= oldestCalendarDate ? savedStart : oldestCalendarDate;
+            const startDate = savedStart || oldestCalendarDate;
             
+            // Set date input values
             document.getElementById('endDate').value = endDate;
-            document.getElementById('endDate').min = oldestCalendarDate;
-            document.getElementById('endDate').max = today;
+            document.getElementById('endDate').max = today; // Only max needs to be set for end date
             
             document.getElementById('startDate').value = startDate;
-            document.getElementById('startDate').min = oldestCalendarDate;
-            document.getElementById('startDate').max = today;
+            document.getElementById('startDate').max = today; // Only max needs to be set
             
             // Set current filter with saved dates
             currentFilter.start = startDate;
@@ -101,6 +100,7 @@ async function initDates() {
         
         document.getElementById('endDate').value = endDate;
         document.getElementById('endDate').max = today;
+        
         document.getElementById('startDate').value = startDate;
         document.getElementById('startDate').max = today;
         
@@ -133,13 +133,7 @@ async function generateAndFilter() {
     if (!end) return alert("Please select end date");
     if (start > end) return alert("Start date cannot be after end date");
     
-    // Validate date ranges
-    if (start < oldestCalendarDate) {
-        alert(`Start date cannot be before ${oldestCalendarDate}`);
-        document.getElementById('startDate').value = oldestCalendarDate;
-        return;
-    }
-    
+    // Validate date ranges (remove the old validation that prevented past dates)
     if (end > today) {
         alert(`End date cannot be after ${today}`);
         document.getElementById('endDate').value = today;
@@ -196,7 +190,7 @@ async function loadLogs() {
             <tr id="row-${r.id}">
                 <td class="ps-4 small">${r.id}</td>
                 <td><strong>${r.actual_date}</strong></td>
-                <td>${r.worker_name}<br><small class="text-muted">${r.worker_id}</small></td>
+                <td>${r.worker_name}<br><small class="text-muted">ID: ${r.worker_id}</small></td>
                 <td>
                     <select class="status-select ${getStatusClass(r.worker_attendance)}"
                             onchange="onStatusChange(${r.id}, 'worker', this.value)"

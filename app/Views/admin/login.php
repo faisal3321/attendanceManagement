@@ -22,11 +22,11 @@
             <form id="loginForm">
                 <div class="mb-3">
                     <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="username" required>
+                    <input type="text" class="form-control" id="username" required autocomplete="off">
                 </div>
                 <div class="mb-4">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" required>
+                    <input type="password" class="form-control" id="password" required autocomplete="off">
                 </div>
                 <button type="submit" class="btn btn-primary w-100" id="loginBtn">
                     <span id="btnSpinner" class="spinner-border spinner-border-sm d-none"></span> Login
@@ -37,6 +37,31 @@
 </div>
 
 <script>
+    // Clear any existing session when loading login page
+    async function clearExistingSession() {
+        try {
+            // Try to logout from API if possible
+            await fetch('<?= base_url('api/logout') ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+        } catch (error) {
+            // Ignore errors - we're on login page anyway
+        }
+        
+        // Clear local storage and session storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Clear cookies
+        document.cookie.split(";").forEach(function(c) {
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+    }
+
+    // Call this function on page load
+    clearExistingSession();
+
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -54,14 +79,20 @@
         try {
             const response = await fetch('<?= base_url('api/login') ?>', {
                 method: 'POST',
-                headers: 
-                { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
 
             const result = await response.json();
 
             if (result.success) {
+                // Clear any old session data before redirecting
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // Store minimal session info if needed
+                localStorage.setItem('lastLogin', new Date().toISOString());
+                
                 window.location.href = '<?= base_url('admin/dashboard') ?>';
             } else {
                 alertBox.textContent = result.messages?.error || result.message || 'Invalid credentials';
@@ -75,6 +106,12 @@
             spinner.classList.add('d-none');
         }
     });
+
+    // Prevent back button from going to dashboard
+    window.history.pushState(null, null, window.location.href);
+    window.onpopstate = function() {
+        window.history.pushState(null, null, window.location.href);
+    };
     
 </script>
 

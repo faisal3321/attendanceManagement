@@ -17,6 +17,9 @@
             <a href="<?= base_url('admin/addWorker') ?>" class="btn btn-primary btn-lg">
                 + Add New Worker
             </a>
+            <a href="<?= base_url('admin/workerList') ?>" class="btn btn-warning btn-lg">
+                Show Worker List
+            </a>
         </div>
         
     </div>
